@@ -1,7 +1,47 @@
 export default {
-    getAllAdvertisements: (req, res) => { },
-    createAdvertisement: (req, res) => { },
-    getAdvertisementById: (req, res) => { },
-    updateAdvertisement: (req, res) => { },
-    deleteAdvertisement: (req, res) => { },
+    getAllAdvertisements: (req, res)  => {
+        try {
+            res.json({
+                message: "إستجابة json"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+    createAdvertisement: (req, res)  => {
+        try {
+            res.json({
+                message: "إستجابة json"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+    getAdvertisementById: (req, res)  => {
+        try {
+            res.json({
+                message: "إستجابة json"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+    updateAdvertisement: (req, res)  => {
+        try {
+            res.json({
+                message: "إستجابة json"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+    deleteAdvertisement: (req, res)  => {
+        try {
+            res.json({
+                message: "إستجابة json"
+            });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
 }
