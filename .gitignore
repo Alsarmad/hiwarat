@@ -1,4 +1,7 @@
 node_modules
 package-lock.json
 test.md
-mydatabase.db
+database/posts.db
+database/relationships_messages.db
+database/reports_favorites.db
+database/users.db

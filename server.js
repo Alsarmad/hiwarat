@@ -2,8 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
 import apiRoutes from './app/routes/api/apiRoutes.js';
-import JsonFileManager from './app/utilities/JsonFileManager.js';
-import databasetest from './database/databasetest.js';
+import JsonFileManager from './app/utils/JsonFileManager.js';
+import initializeDatabases from './database/databaseInitializer.js';
 
 // get the current working directory
 const __dirname = path.resolve();
@@ -24,7 +24,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // توجيه الطلبات (routes)
 apiRoutes(app);
 
-databasetest();
+// تقوم هذه الدالة بإنشاء قواعد البيانات المختلفة وجداولها.
+initializeDatabases();
 
 
 process.on('exit', () => {
