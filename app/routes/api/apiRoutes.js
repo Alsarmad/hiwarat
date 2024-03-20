@@ -1,7 +1,7 @@
-import usersRoutes from './usersRoutes.js';
+import usersRoutes from './usersRoute.js';
 
 export default (app) => {
 
     // Users 
-    app.use('/api/users', usersRoutes);
+    app.use('/api', usersRoutes);
 }

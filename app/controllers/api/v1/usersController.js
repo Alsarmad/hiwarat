@@ -1,6 +1,6 @@
 
 
-async function getAllusers(req, res) {
+async function getAllUsers(req, res) {
     try {
         res.json({
             message: "إستجابة getAllusers json"
@@ -10,7 +10,7 @@ async function getAllusers(req, res) {
     }
 }
 
-async function createUsers(req, res) {
+async function createUser(req, res) {
     try {
         res.json({
             message: "إستجابة createUsers json"
@@ -20,7 +20,7 @@ async function createUsers(req, res) {
     }
 }
 
-async function getUsersById(req, res) {
+async function getUserById(req, res) {
     try {
         res.json({
             message: "إستجابة getUsersById json"
@@ -30,7 +30,7 @@ async function getUsersById(req, res) {
     }
 }
 
-async function updateUsers(req, res) {
+async function updateUser(req, res) {
     try {
         res.json({
             message: "إستجابة updateUsers json"
@@ -40,7 +40,7 @@ async function updateUsers(req, res) {
     }
 }
 
-async function deleteUsers(req, res) {
+async function deleteUser(req, res) {
     try {
         res.json({
             message: "إستجابة deleteUsers json"
@@ -51,9 +51,9 @@ async function deleteUsers(req, res) {
 }
 
 export default {
-    getAllusers,
-    createUsers,
-    getUsersById,
-    updateUsers,
-    deleteUsers,
+    getAllUsers,
+    createUser,
+    getUserById,
+    updateUser,
+    deleteUser,
 }
