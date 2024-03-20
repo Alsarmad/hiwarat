@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import AdvertisementsController from "../../controllers/api/v1/advertisementsController.js";
 
-const router = Router();
+const router = Router(); 
 
 // الحصول على كل الإعلانات
 router.get('/advertisements', AdvertisementsController.getAllAdvertisements);

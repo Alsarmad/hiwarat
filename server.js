@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
-import apiRoutes from './app/routes/api/apiRoutes.js';
+import apiRoutes from './app/routes/api/index.js';
 import JsonFileManager from './app/utils/JsonFileManager.js';
 import initializeDatabases from './database/databaseInitializer.js';
 

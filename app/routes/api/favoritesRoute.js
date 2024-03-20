@@ -19,3 +19,4 @@ router.put('/favorites/:id', FavoritesController.updateFavorite);
 router.delete('/favorites/:id', FavoritesController.deleteFavorite);
 
 export default router;
+ 
