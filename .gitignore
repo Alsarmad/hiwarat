@@ -1,7 +1,8 @@
 node_modules
 package-lock.json
 test.md
-database/posts.db
-database/relationships_messages.db
-database/reports_favorites.db
-database/users.db
+src/database/posts.db
+src/database/relationships_messages.db
+src/database/reports_favorites.db
+src/database/users.db
+test.js
