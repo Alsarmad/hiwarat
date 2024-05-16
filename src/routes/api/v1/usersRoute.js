@@ -21,25 +21,29 @@ export default async (router, config, logger, helpersApi) => {
 
         // الحصول على كل المستخدمين
         router.get('/users', (req, res) => {
-            const { headers } = req;
+            try {
+                const { headers } = req;
 
-            if (!validateAPIKeys({ config }, headers)) {
-                return sendUnauthorizedResponse(res);
-            }
+                if (!validateAPIKeys({ config }, headers)) {
+                    return sendUnauthorizedResponse(res);
+                }
 
-            const users = usersDBManager.getRecordsAll("users");
+                const users = usersDBManager.getRecordsAll("users");
 
-            if (users.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: `لايوجد سجلات (قاعدة البيانات فارغة)`
+                if (users.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: `لايوجد سجلات (قاعدة البيانات فارغة)`
+                    });
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    users: users.map(user => stripSensitiveFields(user))
                 });
+            } catch (error) {
+                return res.status(500).json({ message: `${error}` });
             }
-
-            return res.status(200).json({
-                success: true,
-                ...stripSensitiveFields(users)
-            });
         });
 
         // إنشاء مستخدم جديد
