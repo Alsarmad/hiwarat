@@ -5,4 +5,5 @@ src/database/posts.db
 src/database/relationships_messages.db
 src/database/reports_favorites.db
 src/database/users.db
+src/logs
 test.js
