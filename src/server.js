@@ -33,13 +33,32 @@ app.disable('x-powered-by');
 // يقوم هذا الملف بإنشاء قواعد البيانات المختلفة وجداولها.
 import './database/databaseInitializer.js';
 
+// قواعد البيانات
+import DatabaseManager from './database/DatabaseManager.js';
+const DBdir = config.paths.database;
+const usersDBPath = path.join(DBdir, 'users.db');
+const postsDBPath = path.join(DBdir, 'posts.db');
+const reportsFavsDBPath = path.join(DBdir, 'reports_favorites.db');
+const usersDBManager = new DatabaseManager(usersDBPath);
+const postsDBManager = new DatabaseManager(postsDBPath);
+const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
+usersDBManager.openDatabase();
+postsDBManager.openDatabase();
+reportsFavsDBManager.openDatabase();
+const DBManager = {
+  usersDBManager,
+  postsDBManager,
+  reportsFavsDBManager
+}
+
+// HOME PAGE
 app.get("/", (req, res) => {
   res.send("home page")
 });
 
 /* API VERSION 1.0 ROUTES */
 import APIv1Router from "./routes/api_v1.js";
-app.use("/api/v1", APIv1Router);
+app.use("/api/v1", APIv1Router(DBManager));
 
 const server = app.listen(port, () => {
   console.log(`[SahraRally] Server started on port http://localhost:${port}`);
@@ -57,10 +76,5 @@ function sigHandle(signal) {
   });
 }
 
-const password = "Asdf1234"
-// const { hashedPassword } = await passwordHandler(password, 'hash');
-// console.log("hashedPassword: ", hashedPassword);
-// const { isMatch } = await passwordHandler({ hashedPassword: "$2b$10$ufPcCMVRnb3MDK/1pipoa.JbttCSbDhtCdYiUKT.DirgkZqNcicyK", plainPassword: password }, 'compare');
-// console.log("isMatch: ", isMatch);
 process.on("SIGINT", sigHandle);
 process.on("SIGTERM", sigHandle);

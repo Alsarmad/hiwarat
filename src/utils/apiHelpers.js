@@ -58,14 +58,58 @@ function validateAPIKeys(options, headers) {
             return options.user.apiUsername === headers["api-username"] && options.user.apiKey === headers["api-key"];
         }
     } else {
-        return options.config.APIUSERNAME === headers["api-username"] && options.config.APIKEY === headers["api-key"];
+        return options?.config?.APIUSERNAME === headers["api-username"] && options?.config?.APIKEY === headers["api-key"];
     }
 }
+
+/**
+ * يحاول تحويل سلسلة JSON إلى كائن JavaScript. إذا فشل التحويل،
+ * يفترض أن السلسلة هي سلسلة مفصولة بفواصل ويقوم بتحويلها إلى مصفوفة.
+ * إذا كانت السلسلة فارغة، ترجع مصفوفة فارغة.
+ *
+ * @param {string} jsonString - السلسلة النصية التي تحتوي على JSON أو سلسلة مفصولة بفواصل.
+ * @returns {Array|Object} - الكائن الناتج من تحويل JSON أو مصفوفة من العناصر النصية. إذا كانت السلسلة فارغة، ترجع مصفوفة فارغة.
+ *
+ * @example
+ * // مثال عند استخدام JSON صالح
+ * const jsonStr = '{"key1": "value1", "key2": "value2"}';
+ * const result = tryParseJSON(jsonStr);
+ * console.log(result); // { key1: 'value1', key2: 'value2' }
+ *
+ * @example
+ * // مثال عند استخدام سلسلة مفصولة بفواصل
+ * const csvStr = "linux,windows,mac";
+ * const result = tryParseJSON(csvStr);
+ * console.log(result); // ['linux', 'windows', 'mac']
+ *
+ * @example
+ * // مثال عند استخدام سلسلة فارغة
+ * const emptyStr = "";
+ * const result = tryParseJSON(emptyStr);
+ * console.log(result); // []
+ */
+function tryParseJSON(jsonString) {
+    if (!jsonString) {
+        // إذا كانت السلسلة فارغة، أرجع مصفوفة فارغة
+        return [];
+    }
+
+    try {
+        // محاولة تحويل السلسلة النصية إلى كائن JSON
+        return JSON.parse(jsonString);
+    } catch (e) {
+        // إذا فشل التحويل، افترض أنها سلسلة مفصولة بفواصل وقم بتحويلها إلى مصفوفة
+        return jsonString.split(',').map(tag => tag.trim());
+    }
+}
+
+
 
 export {
     sendUnauthorizedResponse,
     getMissingFields,
     stripSensitiveFields,
     sendMissingFieldsResponse,
-    validateAPIKeys
+    validateAPIKeys,
+    tryParseJSON
 };

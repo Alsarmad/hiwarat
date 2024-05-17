@@ -67,5 +67,6 @@ export const config = {
         logs: path.join(root, "src", "logs"),
         public: path.join(root, "src", "public"),
         favicon: path.join(root, "src", "public", "favicon.ico"),
+        database: path.join(root, "src", "database")
     },
 }

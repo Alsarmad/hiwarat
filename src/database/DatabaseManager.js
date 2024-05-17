@@ -153,16 +153,15 @@ export default class DatabaseManager {
     }
 
     /**
-     * يقوم بحذف سجل من جدول في قاعدة البيانات.
+     * يقوم بحذف سجل من جدول في قاعدة البيانات باستخدام معايير متعددة.
      * @param {string} tableName اسم الجدول الذي يجب حذف السجل منه.
-     * @param {string} primaryKey اسم العمود الرئيسي في الجدول.
-     * @param {any} primaryKeyValue قيمة العمود الرئيسي للسجل الذي يجب حذفه.
+     * @param {object} criteria كائن يحتوي على الأعمدة والقيم التي يجب حذف السجل بناءً عليها.
      * @returns {void}
      * @throws {Error} إذا حدث خطأ أثناء عملية الحذف.
      * @example
-     * dbManager.deleteRecord('users', 'id', 1);
+     * dbManager.deleteRecord('users', { id: 1, status: 'inactive' });
      */
-    deleteRecord(tableName, primaryKey, primaryKeyValue) {
+    deleteRecord(tableName, criteria) {
         try {
             // التحقق من وجود الجدول
             if (!this.tableExists(tableName)) {
@@ -170,20 +169,28 @@ export default class DatabaseManager {
                 return;
             }
 
-            // التحقق من وجود العمود الرئيسي
+            // بناء شرط البحث
             const columns = this.getColumnNames(tableName);
-            if (!columns.includes(primaryKey)) {
-                logError(`العمود الرئيسي ${primaryKey} غير موجود في جدول ${tableName}.`);
-                return;
+            const conditions = [];
+            const values = [];
+            for (const [column, value] of Object.entries(criteria)) {
+                if (!columns.includes(column)) {
+                    logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
+                    return;
+                }
+                conditions.push(`${column} = ?`);
+                values.push(value);
             }
+            const whereClause = conditions.join(' AND ');
 
-            const statement = this.db.prepare(`DELETE FROM ${tableName} WHERE ${primaryKey} = ?`);
-            statement.run(primaryKeyValue);
+            const statement = this.db.prepare(`DELETE FROM ${tableName} WHERE ${whereClause}`);
+            statement.run(...values);
         } catch (error) {
             logError(`حدث خطأ أثناء حذف السجل من جدول ${tableName}:`, error);
             throw error;
         }
     }
+
 
     /**
      * @description إضافة عمود جديد إلى جدول معين.
@@ -307,13 +314,12 @@ export default class DatabaseManager {
     }
 
     /**
-     * @description البحث عن سجل باستخدام قيمة في عمود معين.
+     * @description البحث عن سجل باستخدام معايير متعددة.
      * @param {string} tableName اسم الجدول.
-     * @param {string} column اسم العمود الذي تريد البحث فيه.
-     * @param {any} value القيمة التي تريد البحث عنها.
+     * @param {object} criteria كائن يحتوي على الأعمدة والقيم التي تريد البحث عنها.
      * @returns {object|null} سجل معين إذا وُجد، وإلا فإنه يعيد قيمة null.
      */
-    findRecord(tableName, column, value) {
+    findRecord(tableName, criteria) {
         try {
             // التحقق من وجود الجدول
             const tableExists = this.tableExists(tableName);
@@ -322,23 +328,30 @@ export default class DatabaseManager {
                 return null;
             }
 
-            // التحقق من وجود العمود
+            // بناء شرط البحث
             const columns = this.getColumnNames(tableName);
-            if (!columns.includes(column)) {
-                logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
-                return null;
+            const conditions = [];
+            const values = [];
+            for (const [column, value] of Object.entries(criteria)) {
+                if (!columns.includes(column)) {
+                    logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
+                    return null;
+                }
+                conditions.push(`${column} = ?`);
+                values.push(value);
             }
+            const whereClause = conditions.join(' AND ');
 
-            const record = this.db.prepare(`SELECT * FROM ${tableName} WHERE ${column} = ?`).get(value);
+            const record = this.db.prepare(`SELECT * FROM ${tableName} WHERE ${whereClause}`).get(...values);
             if (record) {
-                // logInfo(`السجل حيث ${column} يساوي ${value} في جدول ${tableName}:`, record);
+                // logInfo(`السجل حيث ${whereClause} في جدول ${tableName}:`, record);
                 return record;
             } else {
-                // logInfo(`لا يوجد سجل حيث ${column} يساوي ${value} في جدول ${tableName}.`);
+                // logInfo(`لا يوجد سجل حيث ${whereClause} في جدول ${tableName}.`);
                 return null;
             }
         } catch (error) {
-            logError(`حدث خطأ أثناء البحث عن سجل حيث ${column} يساوي ${value} في جدول ${tableName}:`, error);
+            logError(`حدث خطأ أثناء البحث عن سجل في جدول ${tableName}:`, error);
             throw error;
         }
     }
