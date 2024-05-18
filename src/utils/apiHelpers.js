@@ -39,27 +39,22 @@ function sendMissingFieldsResponse(res, missingFields) {
  * @returns {object} - كائن بدون الحقول الحساسة.
  */
 function stripSensitiveFields(opj) {
-    const { email, password, hashedPassword, apiUsername, apiKey, ...rest } = opj;
+    const { email, password, hashedPassword, ...rest } = opj;
     return rest;
 }
 
 /**
- * يقوم بالتحقق من صحة الرؤوس API Key و API Username في الطلب.
- * @param {{user, config}} options - الخيارات
+ * التحقق من مصادقة المستخدم
+ * يقوم بالتحقق من صحة الرؤوس Username و Password في الطلب باستخدام كائن مستخدم محدد.
+ * @param {object} user - كائن المستخدم
  * @param {object} headers - الرؤوس المرسلة في الطلب.
- * @returns {boolean} - true إذا كانت API Key و API Username صحيحة، وإلا فإنه يعيد false.
+ * @returns {boolean} 
  */
-function validateAPIKeys(options, headers) {
-    if (options.user && !options.config) {
-        const isAuthorized = process.env.APIUSERNAME === headers["api-username"] && process.env.APIKEY === headers["api-key"];
-        if (isAuthorized) {
-            return isAuthorized
-        } else {
-            return options.user.apiUsername === headers["api-username"] && options.user.apiKey === headers["api-key"];
-        }
-    } else {
-        return options?.config?.APIUSERNAME === headers["api-username"] && options?.config?.APIKEY === headers["api-key"];
+function checkUserAuthentication(user, headers) {
+    if (!user || !headers) {
+        return false; // تأكد من وجود متغيرات المستخدم والرؤوس
     }
+    return user.username === headers["username"]?.toLowerCase() && user.password === headers["password"];
 }
 
 /**
@@ -104,12 +99,72 @@ function tryParseJSON(jsonString) {
 }
 
 
+/**
+ * تحقق من صلاحيات المستخدم.
+ * @param {object} user - كائن المستخدم.
+ * @param {Array<string>} allowedRoles - قائمة الأدوار المسموح بها لتنفيذ الإجراء.
+ * @returns {boolean} - إرجاع true إذا كان للمستخدم أحد الأدوار المسموح بها، وإلا false.
+ */
+function checkUserRole(user, allowedRoles) {
+    const rolesHierarchy = {
+        'guest': 0,
+        'user': 1,
+        'moderator': 2,
+        'admin': 3
+    };
+
+    // تحويل دور المستخدم إلى أحرف صغيرة
+    const userRoleLower = user.role.toLowerCase();
+    // التحقق من أن دور المستخدم يوجد ضمن الأدوار المسموح بها
+    return allowedRoles.map(role => role.toLowerCase()).some(role => rolesHierarchy[userRoleLower] >= rolesHierarchy[role]);
+}
+
+/**
+ * تحويل قيمة إلى قيمة منطقية (boolean) استنادًا إلى نوعها وقيمتها.
+ * @param {any} value - القيمة التي تُريد تحويلها إلى قيمة منطقية.
+ * @returns {boolean} التمثيل المنطقي (boolean) للقيمة المحددة.
+ * @example
+ * // باستخدام رقم
+ * let result = convertToBoolean(1); // سيكون الناتج true
+ * let result2 = convertToBoolean(0); // سيكون الناتج false
+ * 
+ * // باستخدام نص
+ * let result3 = convertToBoolean("true"); // سيكون الناتج true
+ * let result4 = convertToBoolean("false"); // سيكون الناتج false
+ * 
+ * // باستخدام أرقام نصية
+ * let result5 = convertToBoolean("1"); // سيكون الناتج true
+ * let result6 = convertToBoolean("0"); // سيكون الناتج false
+ * 
+ * // باستخدام أنواع أخرى
+ * let result7 = convertToBoolean(null); // سيكون الناتج false
+ * let result8 = convertToBoolean(undefined); // سيكون الناتج false
+ * let result9 = convertToBoolean({}); // سيكون الناتج true (كائن غير فارغ)
+ */
+function convertToBoolean(value) {
+    if (typeof value === 'number') {
+        return value === 1 ? true : false;
+    } else if (typeof value === 'string') {
+        // تحويل الأرقام النصية "1" و "0"
+        if (value === "1") {
+            return true;
+        } else if (value === "0") {
+            return false;
+        } else {
+            return value.toLowerCase() === 'true';
+        }
+    } else {
+        return !!value; // نفي مزدوج لتحويل القيمة إلى منطقية
+    }
+}
 
 export {
     sendUnauthorizedResponse,
     getMissingFields,
     stripSensitiveFields,
     sendMissingFieldsResponse,
-    validateAPIKeys,
+    checkUserAuthentication,
+    checkUserRole,
+    convertToBoolean,
     tryParseJSON
 };

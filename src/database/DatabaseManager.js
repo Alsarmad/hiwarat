@@ -372,4 +372,31 @@ export default class DatabaseManager {
         }
     }
 
+    /**
+     * يسترجع السجلات في جدول معين مع التقسيم إلى صفحات.
+     * @param {string} tableName اسم الجدول الذي يحتوي على البيانات.
+     * @param {number} limit الحد الأقصى لعدد السجلات التي يجب استرجاعها.
+     * @param {number} offset الفاصل الزمني لبدء استرجاع السجلات منه.
+     * @returns {Array} مصفوفة تحتوي على السجلات المسترجعة مع التقسيم إلى صفحات.
+     * @throws {Error} في حالة تجاوز قيمة الـ offset عدد السجلات الموجودة في الجدول.
+     */
+    getRecordsPaginated(tableName, limit, offset) {
+        try {
+            // التحقق من عدد السجلات الموجودة في الجدول
+            const totalRecords = this.db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).get().count;
+
+            if (offset > totalRecords) {
+                logInfo(`القيمة المحددة للـ offset (${offset}) تتجاوز عدد السجلات الموجودة في الجدول (${totalRecords}).`);
+                return []
+            }
+
+            // استعلام قاعدة البيانات لاسترجاع النتائج المطلوبة
+            const statement = this.db.prepare(`SELECT * FROM ${tableName} LIMIT ? OFFSET ?`);
+            return statement.all(limit, offset);
+        } catch (error) {
+            logError(`حدث خطأ أثناء استعراض الجدول ${tableName} بتقسيم الصفحات:`, error);
+            throw error;
+        }
+    }
+
 }

@@ -8,7 +8,8 @@ export default async (router, config, logger, utils, DBManager) => {
             getMissingFields,
             stripSensitiveFields,
             sendMissingFieldsResponse,
-            validateAPIKeys,
+            checkUserAuthentication,
+            checkUserRole,
             generateUniqueId
         } = utils;
         const { usersDBManager } = DBManager;
@@ -17,17 +18,27 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على كل المستخدمين
         router.get('/users', (req, res) => {
             try {
-                const { headers } = req;
+                const MAX_USERS_PER_PAGE = 20;
+                const { headers, body, query } = req;
+                // تحديد عدد المستخدمين في كل صفحة
+                let limit = parseInt(query.limit) || MAX_USERS_PER_PAGE;
+                limit = Math.min(limit, MAX_USERS_PER_PAGE);
 
-                if (!validateAPIKeys({ config }, headers)) {
-                    return sendUnauthorizedResponse(res);
+                if (parseInt(query.limit) > MAX_USERS_PER_PAGE) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `تجاوزت الحد الأقصى لعدد المستخدمين المسموح بعرضه في كل صفحة (${MAX_USERS_PER_PAGE}).`,
+                    });
                 }
 
-                const users = usersDBManager.getRecordsAll("users");
+                const page = parseInt(query.page) || 1; // رقم الصفحة المطلوبة
+                const offset = (page - 1) * limit; // حساب النقطة التي يبدأ منها الاستعلام
+                const users = usersDBManager.getRecordsPaginated("users", limit, offset);
 
                 if (users.length === 0) {
                     return res.status(404).json({
                         success: false,
+                        users: [],
                         message: `لايوجد سجلات (قاعدة البيانات فارغة) ❌`
                     });
                 }
@@ -47,48 +58,42 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
                 const { body } = req;
                 const missingFields = getMissingFields(body, ["username", "full_name", "email", "password"]);
-
                 if (missingFields.length > 0) {
                     return sendMissingFieldsResponse(res, missingFields);
                 }
-
-                const existingUser = usersDBManager.findRecord("users", { username: body.username });
+                const existingUser = usersDBManager.findRecord("users", { username: body.username.toLowerCase() });
                 if (existingUser) {
                     return res.status(400).json({
                         success: false,
                         message: `اسم المستخدم محجوز ❌`
                     });
                 }
-
-                const existingEmail = usersDBManager.findRecord("users", { email: body.email });
+                const existingEmail = usersDBManager.findRecord("users", { email: body.email.toLowerCase() });
                 if (existingEmail) {
                     return res.status(400).json({
                         success: false,
                         message: `البريد الإلكتروني مستخدم بالفعل ❌`
                     });
                 }
-
                 const user_id = generateUniqueId(35);
-                const apiKey = generateUniqueId(45);
                 const { hashedPassword } = await passwordHandler(body.password, 'hash');
                 // الوقت الحالي
                 const currentTime = new Date().toISOString();
-
                 usersDBManager.insertRecord("users", {
                     ...body,
+                    username: body.username.toLowerCase(),
+                    email: body.email.toLowerCase(),
                     user_id,
                     hashedPassword,
-                    apiUsername: body.username,
-                    apiKey,
                     active: false,
+                    role: "user",
                     created_at: currentTime,
                     updated_at: currentTime,
                 });
-
                 res.status(200).json({
                     success: true,
                     user_id,
-                    message: `تم إنشاء المستخدم @${body.username} ✔️`
+                    message: `تم إنشاء المستخدم @${body.username.toLowerCase()} ✔️`
                 });
             } catch (error) {
                 logError(error);
@@ -100,15 +105,13 @@ export default async (router, config, logger, utils, DBManager) => {
         router.get('/users/:username', (req, res) => {
             try {
                 const { username } = req.params;
-                const user = usersDBManager.findRecord("users", { username: username });
-
+                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
                 if (!user) {
                     return res.status(404).json({
                         success: false,
-                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username}. ❌`
+                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username.toLowerCase()}. ❌`
                     });
                 }
-
                 return res.status(200).json({
                     success: true,
                     ...stripSensitiveFields(user)
@@ -124,20 +127,23 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
                 const { headers, body, params } = req;
                 const { username } = params;
-
-                const user = usersDBManager.findRecord("users", { username: username });
+                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
                 if (!user) {
                     return res.status(404).json({
                         success: false,
-                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username}. ❌`
+                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username.toLowerCase()}. ❌`
                     });
                 }
-
-                if (!validateAPIKeys({ user }, headers)) {
+                if (!checkUserAuthentication(user, headers)) {
                     return sendUnauthorizedResponse(res);
                 }
-
-                const existingUsername = usersDBManager.findRecord("users", { username: body.username });
+                if (!checkUserRole(user, ["admin", "moderator", "user"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                    });
+                }
+                const existingUsername = usersDBManager.findRecord("users", { username: body.username.toLowerCase() });
                 if (existingUsername && existingUsername.username !== user.username) {
                     return res.status(400).json({
                         success: false,
@@ -145,7 +151,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const existingEmail = usersDBManager.findRecord("users", { email: body.email });
+                const existingEmail = usersDBManager.findRecord("users", { email: body.email.toLowerCase() });
                 if (existingEmail && existingEmail.email !== user.email) {
                     return res.status(400).json({
                         success: false,
@@ -164,6 +170,10 @@ export default async (router, config, logger, utils, DBManager) => {
                     ...body,
                     user_id: user?.user_id,
                     hashedPassword: newPassHash ? newPassHash : user?.hashedPassword,
+                    username: body?.username ? body?.username.toLowerCase() : user?.username,
+                    email: body?.email ? body?.email.toLowerCase() : user?.email,
+                    active: user?.active,
+                    role: body?.role && (user.role === "admin" || user.role === "moderator") ? body.role : user.role,
                     created_at: user?.created_at,
                     updated_at: currentTime
                 });
@@ -183,24 +193,21 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
                 const { headers, params } = req;
                 const { username } = params;
-                const user = usersDBManager.findRecord("users", { username: username });
-
+                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
                 if (!user) {
                     return res.status(404).json({
                         success: false,
-                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username}. ❌`
+                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${username.toLowerCase()}. ❌`
                     });
                 }
-
-                if (!validateAPIKeys({ user }, headers)) {
+                const existingUser = usersDBManager.findRecord("users", { username: config.ADMIN_USERNAME });
+                if (!checkUserAuthentication(existingUser, headers)) {
                     return sendUnauthorizedResponse(res);
                 }
-
-                usersDBManager.deleteRecord("users", { username: username });
-
+                usersDBManager.deleteRecord("users", { username: username.toLowerCase() });
                 res.status(200).json({
                     success: true,
-                    message: `تم حذف المستخدم بالمعرف ${username} ✔️`
+                    message: `تم حذف المستخدم بالمعرف ${username.toLowerCase()} ✔️`
                 });
             } catch (error) {
                 logError(error);

@@ -7,10 +7,14 @@
  * import './database/databaseInitializer.js';
  */
 
+import 'dotenv/config';
+
 import DatabaseManager from './DatabaseManager.js';
 import path from 'node:path';
 import fs from 'node:fs';
 import { logError, logInfo } from "../utils/logger.js";
+import generateUniqueId from '../utils/generateUniqueId.js';
+import passwordHandler from '../utils/passwordHandler.js';
 
 
 // get the current working directory
@@ -30,7 +34,7 @@ const postsDBManager = new DatabaseManager(postsDBPath);
 const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
 
 // قاعدة بيانات المستخدمين 
-function createUsersDatabase() {
+async function createUsersDatabase() {
     usersDBManager.openDatabase();
 
     // جدول المستخدمين (Users Table)
@@ -41,13 +45,13 @@ function createUsersDatabase() {
         email: usersDBManager.DataTypes.TEXT, // عنوان البريد الإلكتروني للمستخدم.
         password: usersDBManager.DataTypes.TEXT, // كلمة مرور المستخدم (ربما تكون مشفرة).
         hashedPassword: usersDBManager.DataTypes.TEXT, // كلمة مرور المستخدم مشفرة
-        apiUsername: usersDBManager.DataTypes.TEXT, // اسم المستخدم الخاص بـ واجهة برمجة التطبيقات في الغالب هو اسم المستخدم (username)
-        apiKey: usersDBManager.DataTypes.TEXT, // كلمة مرور واجهة برمجة التطبيقات
         active: usersDBManager.DataTypes.TEXT, // حالة تفعيل العضوية true || false
+        role: usersDBManager.DataTypes.TEXT, // دور المستخدم في النظام (Admin, Moderator, User, etc.).
         birthdate: usersDBManager.DataTypes.TEXT, // تاريخ ميلاد المستخدم.
         gender: usersDBManager.DataTypes.TEXT, // جنس المستخدم.
         location: usersDBManager.DataTypes.TEXT, // موقع المستخدم.
         bio: usersDBManager.DataTypes.TEXT, // نبذة عن المستخدم.
+        phone: usersDBManager.DataTypes.TEXT, // هاتف عن المستخدم.
         profile_picture: usersDBManager.DataTypes.BLOB, // صورة الملف الشخصي للمستخدم.
         created_at: usersDBManager.DataTypes.TEXT, // تاريخ إنشاء الحساب.
         updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث للمعلومات.
@@ -70,6 +74,22 @@ function createUsersDatabase() {
         setting_value: usersDBManager.DataTypes.TEXT, // قيمة الإعداد.
         created_at: usersDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
         updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
+    });
+
+    // إنشاء مستخدم (admin) للوصول الكامل إلى جميع الميزات والوظائف.
+    const { hashedPassword } = await passwordHandler(process.env.ADMIN_PASSWORD, 'hash');
+    const currentTime = new Date().toISOString();
+    usersDBManager.insertRecord("users", {
+        user_id: generateUniqueId(35),
+        username: process.env.ADMIN_USERNAME.toLowerCase(),
+        full_name: process.env.ADMIN_FULL_NAME.toLowerCase(),
+        email: process.env.ADMIN_EMAIL.toLowerCase(),
+        password: process.env.ADMIN_PASSWORD,
+        hashedPassword,
+        active: true,
+        role: "admin",
+        created_at: currentTime,
+        updated_at: currentTime,
     });
 
     usersDBManager.closeDatabase();
@@ -97,6 +117,7 @@ function createPostsDatabase() {
         post_content: postsDBManager.DataTypes.TEXT, // نص المنشور بتنسيق html.
         post_content_raw: postsDBManager.DataTypes.TEXT, // نص المنشور بتنسيق raw (text).
         hashtags: postsDBManager.DataTypes.TEXT, // هاشتاجات المنشور. مصفوفة Array
+        is_pinned: postsDBManager.DataTypes.INTEGER, // هل المنشور مثبت أم لا
         created_at: postsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
         updated_at: postsDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
     });
@@ -199,7 +220,7 @@ function createReportsFavsDatabase() {
 
 if (!fs.existsSync(usersDBPath)) {
     logError(`Database file not found: ${usersDBPath}`);
-    createUsersDatabase();
+    await createUsersDatabase();
 }
 if (!fs.existsSync(postsDBPath)) {
     logError(`Database file not found: ${postsDBPath}`);

@@ -7,7 +7,9 @@ import {
     getMissingFields,
     stripSensitiveFields,
     sendMissingFieldsResponse,
-    validateAPIKeys,
+    checkUserAuthentication,
+    checkUserRole,
+    convertToBoolean,
     tryParseJSON
 } from '../utils/apiHelpers.js';
 import usersRoute from "./api/v1/usersRoute.js";
@@ -19,7 +21,9 @@ const utils = {
     getMissingFields,
     stripSensitiveFields,
     sendMissingFieldsResponse,
-    validateAPIKeys,
+    checkUserAuthentication,
+    checkUserRole,
+    convertToBoolean,
     tryParseJSON,
     generateUniqueId
 }

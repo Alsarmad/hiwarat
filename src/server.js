@@ -12,8 +12,6 @@ import favicon from "serve-favicon";
 import helmet from "helmet";
 import compression from "compression";
 
-
-
 const port = config.port;
 
 app.use(helmet(config.helmet));

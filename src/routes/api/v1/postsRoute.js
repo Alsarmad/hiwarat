@@ -7,8 +7,10 @@ export default async (router, config, logger, utils, DBManager) => {
             sendUnauthorizedResponse,
             getMissingFields,
             sendMissingFieldsResponse,
-            validateAPIKeys,
+            checkUserAuthentication,
             tryParseJSON,
+            checkUserRole,
+            convertToBoolean,
             generateUniqueId
         } = utils;
 
@@ -17,20 +19,27 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على كل المنشورات
         router.get('/posts', (req, res) => {
             try {
-                const { headers } = req;
-
-                if (!validateAPIKeys({ config }, headers)) {
-                    return sendUnauthorizedResponse(res);
+                const { query } = req;
+                const MAX_POSTS_PER_PAGE = 20;
+                const page = parseInt(query.page) || 1; // رقم الصفحة المطلوبة
+                let limit = parseInt(query.limit) || MAX_POSTS_PER_PAGE; // عدد المنشورات في كل صفحة (الحد الأقصى MAX_POSTS_PER_PAGE)
+                // تأكيد أن الحد الأقصى لا يتجاوز MAX_POSTS_PER_PAGE
+                limit = Math.min(limit, MAX_POSTS_PER_PAGE);
+                if (parseInt(query.limit) > MAX_POSTS_PER_PAGE) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `تجاوزت الحد الأقصى لعدد المنشورات المسموح به في كل صفحة (${MAX_POSTS_PER_PAGE}).`,
+                    });
                 }
-                const posts = postsDBManager.getRecordsAll("posts");
-
+                const offset = (page - 1) * limit; // حساب النقطة التي يبدأ منها الاستعلام
+                const posts = postsDBManager.getRecordsPaginated("posts", limit, offset);
                 if (posts.length === 0) {
                     return res.status(404).json({
                         success: false,
+                        posts: [],
                         message: `لايوجد سجلات (قاعدة البيانات فارغة) ❌`
                     });
                 }
-
                 return res.status(200).json({
                     success: true,
                     posts: posts.map(post => {
@@ -65,8 +74,23 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                if (!validateAPIKeys({ user: existingUser }, headers)) {
+                if (!checkUserAuthentication(existingUser, headers)) {
                     return sendUnauthorizedResponse(res);
+                }
+
+                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                    });
+                }
+
+                // التحقق من الصلاحيات لتثبيت المنشور
+                if (body?.is_pinned && !checkUserRole(existingUser, ["admin", "moderator"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتثبيت المنشور. ❌'
+                    });
                 }
 
                 // التحقق إذا كان body.hashtags مصفوفة
@@ -88,6 +112,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     post_id,
                     user_id: body.user_id,
                     hashtags: uniqueHashtags,
+                    is_pinned: convertToBoolean(body?.is_pinned) ? 1 : 0,
                     post_content_raw: convert(body.post_content, { wordwrap: false }),
                     created_at: currentTime,
                     updated_at: currentTime,
@@ -163,8 +188,23 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 // التحقق من صحة المفاتيح الخاصة بالواجهة البرمجية
-                if (!validateAPIKeys({ user: existingUser }, headers)) {
+                if (!checkUserAuthentication(existingUser, headers)) {
                     return sendUnauthorizedResponse(res);
+                }
+
+                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                    });
+                }
+
+                // التحقق من الصلاحيات لتثبيت المنشور
+                if (body?.is_pinned && !checkUserRole(existingUser, ["admin", "moderator"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتثبيت المنشور. ❌'
+                    });
                 }
 
                 const currentTime = new Date().toISOString();
@@ -206,6 +246,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     post_content: body.post_content || post.post_content,
                     post_content_raw: convert(body.post_content || post.post_content, { wordwrap: false }),
                     hashtags: newHashtags,
+                    is_pinned: convertToBoolean(body?.is_pinned) ? 1 : post.is_pinned,
                     updated_at: currentTime,
                 });
 
@@ -248,8 +289,15 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                if (!validateAPIKeys({ user }, headers)) {
+                if (!checkUserAuthentication(user, headers)) {
                     return sendUnauthorizedResponse(res);
+                }
+
+                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                    });
                 }
                 // حذف الهاشتاقات المرتبطة بالمنشور من قاعدة البيانات
                 postsDBManager.deleteRecord("hashtags", { post_id });
