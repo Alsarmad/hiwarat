@@ -15,12 +15,14 @@ export default async (router, config, logger, utils, DBManager) => {
         } = utils;
 
         const { postsDBManager, usersDBManager } = DBManager;
+        const MAX_POST_TITLE_LENGTH = 100;
+        const MAX_POST_CONTENT_LENGTH = 10000;
+        const MAX_POSTS_PER_PAGE = 20;
 
         // الحصول على كل المنشورات
         router.get('/posts', (req, res) => {
             try {
                 const { query } = req;
-                const MAX_POSTS_PER_PAGE = 20;
                 const page = parseInt(query.page) || 1; // رقم الصفحة المطلوبة
                 let limit = parseInt(query.limit) || MAX_POSTS_PER_PAGE; // عدد المنشورات في كل صفحة (الحد الأقصى MAX_POSTS_PER_PAGE)
                 // تأكيد أن الحد الأقصى لا يتجاوز MAX_POSTS_PER_PAGE
@@ -59,12 +61,25 @@ export default async (router, config, logger, utils, DBManager) => {
         router.post('/create-posts', (req, res) => {
             try {
                 const { body, headers } = req;
-                const missingFields = getMissingFields(body, ["user_id", "post_content", "hashtags"]);
+                const missingFields = getMissingFields(body, ["user_id", "post_title", "post_content", "hashtags"]);
 
                 if (missingFields.length > 0) {
                     return sendMissingFieldsResponse(res, missingFields);
                 }
 
+                if (body.post_title.length > MAX_POST_TITLE_LENGTH) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `عنوان المنشور طويل جدًا. الحد الأقصى لطول العنوان هو ${MAX_POST_TITLE_LENGTH} حرفًا. ❌`
+                    });
+                }
+
+                if (body.post_content.length > MAX_POST_CONTENT_LENGTH) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `محتوى المنشور طويل جدًا. الحد الأقصى لطول المحتوى هو ${MAX_POST_CONTENT_LENGTH} حرفًا. ❌`
+                    });
+                }
 
                 const existingUser = usersDBManager.findRecord("users", { user_id: body.user_id });
                 if (!existingUser) {
@@ -113,6 +128,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     user_id: body.user_id,
                     hashtags: uniqueHashtags,
                     is_pinned: convertToBoolean(body?.is_pinned) ? 1 : 0,
+                    post_title: convert(body.post_title, { wordwrap: false }),
                     post_content_raw: convert(body.post_content, { wordwrap: false }),
                     created_at: currentTime,
                     updated_at: currentTime,

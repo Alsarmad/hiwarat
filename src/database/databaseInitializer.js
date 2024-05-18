@@ -114,6 +114,7 @@ function createPostsDatabase() {
     postsDBManager.createTable('posts', {
         post_id: postsDBManager.DataTypes.TEXT, // مُعرف فريد لكل منشور.
         user_id: postsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الذي نشر المنشور.
+        post_title: postsDBManager.DataTypes.TEXT, // عنوان المنشور
         post_content: postsDBManager.DataTypes.TEXT, // نص المنشور بتنسيق html.
         post_content_raw: postsDBManager.DataTypes.TEXT, // نص المنشور بتنسيق raw (text).
         hashtags: postsDBManager.DataTypes.TEXT, // هاشتاجات المنشور. مصفوفة Array
