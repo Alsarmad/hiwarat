@@ -24,14 +24,14 @@ const root = path.resolve(process.cwd());
 const DBdir = path.join(root, "src", "database");
 const usersDBPath = path.join(DBdir, 'users.db');
 const postsDBPath = path.join(DBdir, 'posts.db');
-// const relMsgsDBPath = path.join(DBdir, 'relationships_messages.db');
 const reportsFavsDBPath = path.join(DBdir, 'reports_favorites.db');
+const dailyActivityDBPath = path.join(DBdir, 'daily_activity.db');
 
 // إنشاء كائنات DatabaseManager لكل قاعدة بيانات
 const usersDBManager = new DatabaseManager(usersDBPath);
 const postsDBManager = new DatabaseManager(postsDBPath);
-// const relMsgsDBManager = new DatabaseManager(relMsgsDBPath);
 const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
+const dailyActivityDBManager = new DatabaseManager(dailyActivityDBPath);
 
 // قاعدة بيانات المستخدمين 
 async function createUsersDatabase() {
@@ -45,7 +45,8 @@ async function createUsersDatabase() {
         email: usersDBManager.DataTypes.TEXT, // عنوان البريد الإلكتروني للمستخدم.
         password: usersDBManager.DataTypes.TEXT, // كلمة مرور المستخدم (ربما تكون مشفرة).
         hashedPassword: usersDBManager.DataTypes.TEXT, // كلمة مرور المستخدم مشفرة
-        active: usersDBManager.DataTypes.TEXT, // حالة تفعيل العضوية true || false
+        active: usersDBManager.DataTypes.INTEGER, // حالة تفعيل العضوية (true)=1 || (false)=0
+        is_banned: usersDBManager.DataTypes.INTEGER, // حظر العضوية (true)=1 || (false)=0
         role: usersDBManager.DataTypes.TEXT, // دور المستخدم في النظام (Admin, Moderator, User, etc.).
         birthdate: usersDBManager.DataTypes.TEXT, // تاريخ ميلاد المستخدم.
         gender: usersDBManager.DataTypes.TEXT, // جنس المستخدم.
@@ -55,25 +56,6 @@ async function createUsersDatabase() {
         profile_picture: usersDBManager.DataTypes.BLOB, // صورة الملف الشخصي للمستخدم.
         created_at: usersDBManager.DataTypes.TEXT, // تاريخ إنشاء الحساب.
         updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث للمعلومات.
-    });
-
-    // // جدول التسجيلات (Registrations Table)
-    // usersDBManager.createTable('registrations', {
-    //     registration_id: usersDBManager.DataTypes.TEXT, // مُعرف فريد لكل عملية تسجيل.
-    //     user_id: usersDBManager.DataTypes.TEXT, // مُعرف المستخدم المسجل.
-    //     registration_type: usersDBManager.DataTypes.TEXT, // نوع عملية التسجيل (مثلاً: تسجيل دخول، تسجيل خروج، إنشاء حساب جديد، إلخ).
-    //     created_at: usersDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
-    //     updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
-    // });
-
-    // جدول الإعدادات (Settings Table)
-    usersDBManager.createTable('settings', {
-        setting_id: usersDBManager.DataTypes.TEXT, // مُعرف فريد لكل إعداد.
-        user_id: usersDBManager.DataTypes.TEXT, // مُعرف للمستخدم المرتبط بالإعداد.
-        setting_name: usersDBManager.DataTypes.TEXT, // اسم الإعداد.
-        setting_value: usersDBManager.DataTypes.TEXT, // قيمة الإعداد.
-        created_at: usersDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
-        updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
     });
 
     // إنشاء مستخدم (admin) للوصول الكامل إلى جميع الميزات والوظائف.
@@ -86,7 +68,8 @@ async function createUsersDatabase() {
         email: process.env.ADMIN_EMAIL.toLowerCase(),
         password: process.env.ADMIN_PASSWORD,
         hashedPassword,
-        active: true,
+        active: 1,
+        is_banned: 0,
         role: "admin",
         created_at: currentTime,
         updated_at: currentTime,
@@ -104,8 +87,8 @@ function createPostsDatabase() {
         comment_id: postsDBManager.DataTypes.TEXT, // مُعرف فريد لكل تعليق.
         post_id: postsDBManager.DataTypes.TEXT, // مُعرف للمنشور الذي يتعلق به التعليق.
         user_id: postsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الذي قام بالتعليق.
-        comment_text: postsDBManager.DataTypes.TEXT, // نص التعليق بتنسيق raw (text).
-        comment_html: postsDBManager.DataTypes.TEXT, // نص التعليق بتنسيق html.
+        comment_content: postsDBManager.DataTypes.TEXT, // نص التعليق بتنسيق html.
+        comment_content_raw: postsDBManager.DataTypes.TEXT, // نص التعليق بتنسيق raw (text).
         created_at: postsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
         updated_at: postsDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
     });
@@ -150,47 +133,8 @@ function createPostsDatabase() {
         updated_at: postsDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
     });
 
-    // // جدول الفئات (Categories Table)
-    // postsDBManager.createTable('categories', {
-    //     category_id: postsDBManager.DataTypes.TEXT, // مُعرف فريد لكل فئة.
-    //     category_name: postsDBManager.DataTypes.TEXT, // اسم الفئة.
-    //     category_description: postsDBManager.DataTypes.TEXT // وصف الفئة.
-    // });
-
     postsDBManager.closeDatabase();
 }
-
-// // قاعدة بيانات العلاقات والرسائل
-// function createRelMsgsDatabase() {
-//     relMsgsDBManager.openDatabase();
-
-//     // جدول الإشعارات (Notifications Table)
-//     relMsgsDBManager.createTable('notifications', {
-//         notification_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف فريد لكل إشعار.
-//         user_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف للمستخدم المستلم للإشعار.
-//         notification_text: relMsgsDBManager.DataTypes.TEXT, // نص الإشعار.
-//         notification_date: relMsgsDBManager.DataTypes.TEXT // تاريخ الإشعار.
-//     });
-
-//     // جدول العلاقات بين المستخدمين (Relationships Table)
-//     relMsgsDBManager.createTable('relationships', {
-//         relationship_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف فريد لكل علاقة.
-//         user1_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف لأحد المستخدمين في العلاقة.
-//         user2_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الآخر في العلاقة.
-//         relationship_type: relMsgsDBManager.DataTypes.TEXT // نوع العلاقة (مثل: صديق، متابع، إلخ).
-//     });
-
-//     // جدول الرسائل الخاصة (Messages Table)
-//     relMsgsDBManager.createTable('messages', {
-//         message_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف فريد لكل رسالة.
-//         sender_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف للمرسل للرسالة.
-//         receiver_id: relMsgsDBManager.DataTypes.TEXT, // مُعرف للمستقبل للرسالة.
-//         message_text: relMsgsDBManager.DataTypes.TEXT, // نص الرسالة.
-//         message_date: relMsgsDBManager.DataTypes.TEXT // تاريخ الرسالة.
-//     });
-
-//     relMsgsDBManager.closeDatabase();
-// }
 
 // قاعدة بيانات البلاغات والمفضلة
 function createReportsFavsDatabase() {
@@ -220,21 +164,18 @@ function createReportsFavsDatabase() {
 }
 
 if (!fs.existsSync(usersDBPath)) {
-    logError(`Database file not found: ${usersDBPath}`);
+    logInfo(`Database created: ${usersDBPath}`);
     await createUsersDatabase();
 }
 if (!fs.existsSync(postsDBPath)) {
-    logError(`Database file not found: ${postsDBPath}`);
+    logInfo(`Database created: ${postsDBPath}`);
     createPostsDatabase();
 }
 if (!fs.existsSync(reportsFavsDBPath)) {
-    logError(`Database file not found: ${reportsFavsDBPath}`);
+    logInfo(`Database created: ${reportsFavsDBPath}`);
     createReportsFavsDatabase();
 }
-// if (!fs.existsSync(relMsgsDBPath)) {
-//     logError(`Database file not found: ${relMsgsDBPath}`);
-//     createRelMsgsDatabase();
-// }
+
 else {
     logInfo("لقد تم إنشاء قواعد البيانات وجداولها مسبقاً ✔️");
 }

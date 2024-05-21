@@ -1,14 +1,4 @@
-/**
- * يقوم بإرسال استجابة 401 غير مصرح بها.
- * @param {object} res - كائن الاستجابة Express.
- * @returns {object} - كائن JSON يحتوي على رسالة الخطأ.
- */
-function sendUnauthorizedResponse(res) {
-    return res.status(401).json({
-        success: false,
-        message: `عذرًا، غير مصرح لك بالوصول. يرجى التحقق من صحة البيانات المقدمة والمحاولة مرة أخرى.`
-    });
-}
+import passwordHandler from '../utils/passwordHandler.js';
 
 /**
  * يقوم بإرجاع الحقول المفقودة في الجسم من الحقول المطلوبة.
@@ -45,16 +35,32 @@ function stripSensitiveFields(opj) {
 
 /**
  * التحقق من مصادقة المستخدم
- * يقوم بالتحقق من صحة الرؤوس Username و Password في الطلب باستخدام كائن مستخدم محدد.
- * @param {object} user - كائن المستخدم
- * @param {object} headers - الرؤوس المرسلة في الطلب.
- * @returns {boolean} 
+ * يقوم بالتحقق من صحة اسم المستخدم وكلمة المرور باستخدام البيانات المخزنة في قاعدة البيانات.
+ * @param {object} credentials - كائن يحتوي على اسم المستخدم وكلمة المرور.
+ * @returns {Promise<{success: boolean, user: object | null, message: string}>}
  */
-function checkUserAuthentication(user, headers) {
-    if (!user || !headers) {
-        return false; // تأكد من وجود متغيرات المستخدم والرؤوس
+async function checkUserAuthentication({ username, password }, usersDBManager) {
+    if (!username || !password) {
+        return { success: false, user: null, message: "اسم المستخدم أو كلمة المرور غير محددة" };
     }
-    return user.username === headers["username"]?.toLowerCase() && user.password === headers["password"];
+
+    const user = usersDBManager.findRecord("users", { username: username?.toLowerCase() });
+    if (!user) {
+        return { success: false, user: null, message: "المستخدم غير موجود" };
+    }
+
+    // التحقق من كلمة المرور
+    const { isMatch } = await passwordHandler({ hashedPassword: user.hashedPassword, plainPassword: password }, 'compare');
+    if (!isMatch) {
+        return { success: false, user: null, message: "كلمة المرور غير صحيحة" };
+    }
+
+    // التحقق من حالة تفعيل العضوية
+    if (!convertToBoolean(user.active)) {
+        return { success: false, user: null, message: "الحساب غير مفعل" };
+    }
+
+    return { success: true, user: stripSensitiveFields(user), message: "تم التحقق بنجاح" };
 }
 
 /**
@@ -107,10 +113,11 @@ function tryParseJSON(jsonString) {
  */
 function checkUserRole(user, allowedRoles) {
     const rolesHierarchy = {
-        'guest': 0,
-        'user': 1,
-        'moderator': 2,
-        'admin': 3
+        'banned': 0,
+        'guest': 1,
+        'user': 2,
+        'moderator': 3,
+        'admin': 4
     };
 
     // تحويل دور المستخدم إلى أحرف صغيرة
@@ -158,13 +165,14 @@ function convertToBoolean(value) {
     }
 }
 
-export {
-    sendUnauthorizedResponse,
-    getMissingFields,
-    stripSensitiveFields,
-    sendMissingFieldsResponse,
-    checkUserAuthentication,
-    checkUserRole,
-    convertToBoolean,
-    tryParseJSON
-};
+export default (DBManager) => {
+    return {
+        getMissingFields,
+        stripSensitiveFields,
+        sendMissingFieldsResponse,
+        checkUserAuthentication: (credentials) => checkUserAuthentication(credentials, DBManager.usersDBManager),
+        checkUserRole,
+        convertToBoolean,
+        tryParseJSON
+    };
+}

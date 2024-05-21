@@ -112,18 +112,16 @@ export default class DatabaseManager {
     }
 
     /**
-     * @description تحديث بيانات سجل في جدول معين.
-     * @param {string} tableName اسم الجدول.
-     * @param {string} primaryKey اسم العمود الرئيسي الذي يحدد السجل المراد تحديثه.
-     * @param {any} primaryKeyValue قيمة العمود الرئيسي للسجل المراد تحديثه.
-     * @param {object} newData البيانات الجديدة التي تريد تحديث السجل بها.
-     * 
-     * @example
-     * dbManager.updateRecord("users", "id", "1", { columnName: "newData" });
-     */
-    updateRecord(tableName, primaryKey, primaryKeyValue, newData) {
+      * @description تحديث بيانات سجل في جدول معين بناءً على معايير متعددة.
+      * @param {string} tableName اسم الجدول.
+      * @param {object} criteria كائن يحتوي على الأعمدة والقيم التي تريد تحديد السجل بناءً عليها.
+      * @param {object} newData البيانات الجديدة التي تريد تحديث السجل بها.
+      * 
+      * @example
+      * dbManager.updateRecord("users", { id: "1", status: "active" }, { columnName: "newData" });
+      */
+    updateRecord(tableName, criteria, newData) {
         try {
-
             // التحقق من أن newData غير فارغة
             if (!newData || Object.keys(newData).length === 0) {
                 logError(`لا يمكن تحديث السجل في الجدول ${tableName}، حيث أن البيانات الجديدة غير محددة أو فارغة. يُرجى تقديم بيانات جديدة صالحة في شكل كائن.`);
@@ -133,24 +131,36 @@ export default class DatabaseManager {
             // التحقق من وجود الجدول
             if (!this.tableExists(tableName)) {
                 logError(`الجدول ${tableName} غير موجود.`);
-                return;
+                return false;
             }
 
-            // التحقق من وجود العمود الرئيسي
+            // بناء شرط البحث
             const columns = this.getColumnNames(tableName);
-            if (!columns.includes(primaryKey)) {
-                logError(`العمود الرئيسي ${primaryKey} غير موجود في جدول ${tableName}.`);
-                return;
+            const conditions = [];
+            const values = [];
+            for (const [column, value] of Object.entries(criteria)) {
+                if (!columns.includes(column)) {
+                    logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
+                    return false;
+                }
+                conditions.push(`${column} = ?`);
+                values.push(value);
             }
+            const whereClause = conditions.join(' AND ');
 
+            // بناء القيم الجديدة للتحديث
             const setValues = Object.entries(newData).map(([key, value]) => `${key} = '${value}'`).join(', ');
-            const statement = this.db.prepare(`UPDATE ${tableName} SET ${setValues} WHERE ${primaryKey} = ?`);
-            statement.run(primaryKeyValue);
+
+            // تنفيذ تحديث السجل
+            const statement = this.db.prepare(`UPDATE ${tableName} SET ${setValues} WHERE ${whereClause}`);
+            statement.run(...values);
+            return true;
         } catch (error) {
             logError(`حدث خطأ أثناء تحديث السجل في جدول ${tableName}:`, error);
             throw error;
         }
     }
+
 
     /**
      * يقوم بحذف سجل من جدول في قاعدة البيانات باستخدام معايير متعددة.
@@ -390,13 +400,12 @@ export default class DatabaseManager {
                 return []
             }
 
-            // استعلام قاعدة البيانات لاسترجاع النتائج المطلوبة
-            const statement = this.db.prepare(`SELECT * FROM ${tableName} LIMIT ? OFFSET ?`);
+            // استعلام قاعدة البيانات لاسترجاع النتائج المطلوبة مع ترتيب من الأحدث إلى الأقدم باستخدام ROWID
+            const statement = this.db.prepare(`SELECT * FROM ${tableName} ORDER BY ROWID DESC LIMIT ? OFFSET ?`);
             return statement.all(limit, offset);
         } catch (error) {
             logError(`حدث خطأ أثناء استعراض الجدول ${tableName} بتقسيم الصفحات:`, error);
             throw error;
         }
     }
-
 }

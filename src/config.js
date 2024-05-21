@@ -9,6 +9,7 @@ export const config = {
     /* Server */
     port: port,
     domain: domain,
+    defaultLang: process.env.DEFAULTLANG || "en",
 
     /* Config Api */
     ADMIN_USERNAME: process.env.ADMIN_USERNAME,

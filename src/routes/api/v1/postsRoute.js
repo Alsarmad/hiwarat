@@ -4,42 +4,59 @@ export default async (router, config, logger, utils, DBManager) => {
     const { logError } = logger;
     try {
         const {
-            sendUnauthorizedResponse,
+            translationManager,
+            rateLimit,
             getMissingFields,
             sendMissingFieldsResponse,
             checkUserAuthentication,
             tryParseJSON,
             checkUserRole,
             convertToBoolean,
-            generateUniqueId
+            generateUniqueId,
+            dataValidator
         } = utils;
 
-        const { postsDBManager, usersDBManager } = DBManager;
-        const MAX_POST_TITLE_LENGTH = 100;
-        const MAX_POST_CONTENT_LENGTH = 10000;
+        const { postsDBManager } = DBManager;
         const MAX_POSTS_PER_PAGE = 20;
+        const lang = config.defaultLang;
+
+        // إعداد المحدد للطلبات مع رسالة مخصصة
+        const createPostLimiter = rateLimit({
+            windowMs: 24 * 60 * 60 * 1000, // 24 ساعة
+            max: 20, // الحد الأقصى لعدد الطلبات لكل IP خلال نافذة الوقت المحددة
+            handler: (req, res) => {
+                const message = translationManager.translate('post_rate_limit_exceeded', {}, lang);
+                res.status(429).json({
+                    success: false,
+                    message: message,
+                });
+            },
+            headers: true,
+
+        });
 
         // الحصول على كل المنشورات
         router.get('/posts', (req, res) => {
             try {
                 const { query } = req;
-                const page = parseInt(query.page) || 1; // رقم الصفحة المطلوبة
-                let limit = parseInt(query.limit) || MAX_POSTS_PER_PAGE; // عدد المنشورات في كل صفحة (الحد الأقصى MAX_POSTS_PER_PAGE)
-                // تأكيد أن الحد الأقصى لا يتجاوز MAX_POSTS_PER_PAGE
+                const page = parseInt(query.page) || 1;
+                let limit = parseInt(query.limit) || MAX_POSTS_PER_PAGE;
                 limit = Math.min(limit, MAX_POSTS_PER_PAGE);
                 if (parseInt(query.limit) > MAX_POSTS_PER_PAGE) {
+                    const message = translationManager.translate('max_posts_per_page_exceeded', { max_posts_per_page: MAX_POSTS_PER_PAGE }, lang);
                     return res.status(400).json({
                         success: false,
-                        message: `تجاوزت الحد الأقصى لعدد المنشورات المسموح به في كل صفحة (${MAX_POSTS_PER_PAGE}).`,
+                        message: message,
                     });
                 }
                 const offset = (page - 1) * limit; // حساب النقطة التي يبدأ منها الاستعلام
                 const posts = postsDBManager.getRecordsPaginated("posts", limit, offset);
                 if (posts.length === 0) {
+                    const message = translationManager.translate('no_records_found', {}, lang);
                     return res.status(404).json({
                         success: false,
                         posts: [],
-                        message: `لايوجد سجلات (قاعدة البيانات فارغة) ❌`
+                        message: message
                     });
                 }
                 return res.status(200).json({
@@ -47,7 +64,8 @@ export default async (router, config, logger, utils, DBManager) => {
                     posts: posts.map(post => {
                         return {
                             ...post,
-                            hashtags: tryParseJSON(post?.hashtags)
+                            hashtags: tryParseJSON(post?.hashtags),
+                            is_pinned: convertToBoolean(post?.is_pinned)
                         }
                     })
                 });
@@ -58,61 +76,43 @@ export default async (router, config, logger, utils, DBManager) => {
         });
 
         // إنشاء منشور جديد
-        router.post('/create-posts', (req, res) => {
+        router.post('/create-posts', createPostLimiter, async (req, res) => {
             try {
                 const { body, headers } = req;
-                const missingFields = getMissingFields(body, ["user_id", "post_title", "post_content", "hashtags"]);
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                if (!authResult.success) {
+                    return res.status(401).json(authResult);
+                }
 
+                const isBanned = convertToBoolean(authResult.user.is_banned);
+                if (isBanned) {
+                    const message = translationManager.translate('user_banned_create_post', { requester: authResult.user.username }, lang);
+                    return res.status(403).json({
+                        success: false,
+                        message: message
+                    });
+                }
+
+                const missingFields = getMissingFields(body, ["post_title", "post_content", "hashtags"]);
                 if (missingFields.length > 0) {
                     return sendMissingFieldsResponse(res, missingFields);
                 }
 
-                if (body.post_title.length > MAX_POST_TITLE_LENGTH) {
+                // التحقق من البيانات المدخلة
+                const validation = dataValidator.validate(body);
+                if (!validation.success) {
                     return res.status(400).json({
                         success: false,
-                        message: `عنوان المنشور طويل جدًا. الحد الأقصى لطول العنوان هو ${MAX_POST_TITLE_LENGTH} حرفًا. ❌`
-                    });
-                }
-
-                if (body.post_content.length > MAX_POST_CONTENT_LENGTH) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `محتوى المنشور طويل جدًا. الحد الأقصى لطول المحتوى هو ${MAX_POST_CONTENT_LENGTH} حرفًا. ❌`
-                    });
-                }
-
-                const existingUser = usersDBManager.findRecord("users", { user_id: body.user_id });
-                if (!existingUser) {
-                    return res.status(401).json({
-                        success: false,
-                        message: `العضو غير موجود: لايوجد لدينا عضو بهذا المعرف ${body.user_id}. ❌`
-                    });
-                }
-
-                if (!checkUserAuthentication(existingUser, headers)) {
-                    return sendUnauthorizedResponse(res);
-                }
-
-                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
-                    return res.status(403).json({
-                        success: false,
-                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                        message: validation.message,
                     });
                 }
 
                 // التحقق من الصلاحيات لتثبيت المنشور
-                if (body?.is_pinned && !checkUserRole(existingUser, ["admin", "moderator"])) {
+                if (body?.is_pinned && !checkUserRole(authResult.user, ["admin", "moderator"])) {
+                    const message = translationManager.translate('not_authorized_pin_post', {}, lang);
                     return res.status(403).json({
                         success: false,
-                        message: 'غير مصرح لك بتثبيت المنشور. ❌'
-                    });
-                }
-
-                // التحقق إذا كان body.hashtags مصفوفة
-                if (!Array.isArray(body?.hashtags)) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `الرجاء توفير الهشتاقات في شكل مصفوفة ["tag1", "tag2", "tag3"]. ❌`
+                        message: message
                     });
                 }
 
@@ -122,17 +122,18 @@ export default async (router, config, logger, utils, DBManager) => {
                 const post_id = generateUniqueId(35);
                 // الوقت الحالي
                 const currentTime = new Date().toISOString();
-                postsDBManager.insertRecord("posts", {
-                    ...body,
+                const dataPost = {
                     post_id,
-                    user_id: body.user_id,
+                    user_id: authResult.user.user_id,
+                    post_title: convert(body.post_title, { wordwrap: false }),
+                    post_content: body.post_content,
+                    post_content_raw: convert(body.post_content, { wordwrap: false }),
                     hashtags: uniqueHashtags,
                     is_pinned: convertToBoolean(body?.is_pinned) ? 1 : 0,
-                    post_title: convert(body.post_title, { wordwrap: false }),
-                    post_content_raw: convert(body.post_content, { wordwrap: false }),
                     created_at: currentTime,
                     updated_at: currentTime,
-                });
+                }
+                postsDBManager.insertRecord("posts", dataPost);
 
                 for (const hashtag of uniqueHashtags) {
                     const hashtag_id = generateUniqueId(35);
@@ -144,10 +145,14 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
+                const message = translationManager.translate('post_created', { post_id: post_id }, lang);
                 res.status(200).json({
                     success: true,
-                    ...body,
-                    message: `تم إنشاء المنشور بالمعرف: ${post_id} ✔️`
+                    post: {
+                        ...dataPost,
+                        is_pinned: convertToBoolean(body?.is_pinned)
+                    },
+                    message: message
                 });
             } catch (error) {
                 logError(error);
@@ -159,18 +164,24 @@ export default async (router, config, logger, utils, DBManager) => {
         router.get('/posts/:post_id', (req, res) => {
             try {
                 const { post_id } = req.params;
-                const post = postsDBManager.findRecord("posts", { post_id });
-
-                if (!post) {
-                    return res.status(404).json({
+                if (post_id && post_id.length > 50) {
+                    const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
+                    return res.status(422).json({
                         success: false,
-                        message: `المنشور المطلوب غير موجود. ❌`
+                        message: message,
                     });
                 }
-
+                const post = postsDBManager.findRecord("posts", { post_id });
+                if (!post) {
+                    const message = translationManager.translate('post_not_found', {}, lang);
+                    return res.status(404).json({
+                        success: false,
+                        message: message
+                    });
+                }
                 return res.status(200).json({
                     success: true,
-                    ...post,
+                    post: post,
                     hashtags: tryParseJSON(post?.hashtags)
                 });
             } catch (error) {
@@ -180,46 +191,69 @@ export default async (router, config, logger, utils, DBManager) => {
         });
 
         // تحديث منشور بواسطة المعرف
-        router.put('/posts/:post_id', (req, res) => {
+        router.put('/posts/:post_id', async (req, res) => {
             try {
                 const { headers, body, params } = req;
                 const { post_id } = params;
+                if (post_id && post_id.length > 50) {
+                    const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
+                    return res.status(422).json({
+                        success: false,
+                        message: message,
+                    });
+                }
+
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                if (!authResult.success) {
+                    return res.status(401).json(authResult);
+                }
 
                 // التحقق من وجود المنشور
                 const post = postsDBManager.findRecord("posts", { post_id });
                 if (!post) {
+                    const message = translationManager.translate('post_not_found', {}, lang);
                     return res.status(404).json({
                         success: false,
-                        message: `المنشور المطلوب غير موجود. ❌`
+                        message: message
                     });
                 }
 
-                // التحقق من وجود العضو
-                const existingUser = usersDBManager.findRecord("users", { user_id: body.user_id });
-                if (!existingUser) {
-                    return res.status(401).json({
-                        success: false,
-                        message: `العضو غير موجود: لا يوجد لدينا عضو بهذا المعرف ${body.user_id}. ❌`
-                    });
-                }
+                // التحقق من صلاحية المستخدم لتحديث بينات المنشور
+                const isOwner = authResult.user.user_id === post.user_id;
+                const isModeratorOrAdmin = checkUserRole(authResult.user, ["admin", "moderator"]);
+                const isBanned = convertToBoolean(authResult.user.is_banned); // تأكد من حالة الحظر للمستخدم
 
-                // التحقق من صحة المفاتيح الخاصة بالواجهة البرمجية
-                if (!checkUserAuthentication(existingUser, headers)) {
-                    return sendUnauthorizedResponse(res);
-                }
-
-                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
+                // تحقق من حالة الحظر أولاً
+                if (isBanned) {
+                    const message = translationManager.translate('user_banned_update_post', { requester: authResult.user.username }, lang);
                     return res.status(403).json({
                         success: false,
-                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                        message: message
+                    });
+                }
+
+                if (!(isOwner || isModeratorOrAdmin)) {
+                    const message = translationManager.translate('not_authorized_update_post', {}, lang);
+                    return res.status(403).json({
+                        success: false,
+                        message: message
+                    });
+                }
+
+                const validation = dataValidator.validate(body);
+                if (!validation.success) {
+                    return res.status(400).json({
+                        success: false,
+                        message: validation.message,
                     });
                 }
 
                 // التحقق من الصلاحيات لتثبيت المنشور
-                if (body?.is_pinned && !checkUserRole(existingUser, ["admin", "moderator"])) {
+                if (body?.is_pinned && !isModeratorOrAdmin) {
+                    const message = translationManager.translate('not_authorized_pin_post', {}, lang);
                     return res.status(403).json({
                         success: false,
-                        message: 'غير مصرح لك بتثبيت المنشور. ❌'
+                        message: message
                     });
                 }
 
@@ -257,18 +291,25 @@ export default async (router, config, logger, utils, DBManager) => {
                     }
                 }
 
-                // تحديث المنشور بالبيانات الجديدة
-                postsDBManager.updateRecord("posts", "post_id", post_id, {
+                const updatedPost = {
                     post_content: body.post_content || post.post_content,
                     post_content_raw: convert(body.post_content || post.post_content, { wordwrap: false }),
                     hashtags: newHashtags,
-                    is_pinned: convertToBoolean(body?.is_pinned) ? 1 : post.is_pinned,
+                    is_pinned: convertToBoolean(body?.is_pinned) ? 1 : convertToBoolean(post?.is_pinned) ? 1 : 0,
                     updated_at: currentTime,
-                });
+                }
 
+                // تحديث المنشور بالبيانات الجديدة
+                postsDBManager.updateRecord("posts", { post_id: post_id, user_id: post.user_id }, updatedPost);
+
+                const message = translationManager.translate('post_updated', { post_id: post_id }, lang);
                 res.status(200).json({
                     success: true,
-                    message: `تم تحديث المنشور بنجاح: ${post_id} ✔️`
+                    post: {
+                        ...post,
+                        ...updatedPost
+                    },
+                    message: message
                 });
 
             } catch (error) {
@@ -278,52 +319,65 @@ export default async (router, config, logger, utils, DBManager) => {
         });
 
         // حذف منشور بواسطة المعرف
-        router.delete('/posts/:post_id', (req, res) => {
+        router.delete('/posts/:post_id', async (req, res) => {
             try {
-                const { headers, params, body } = req;
+                const { headers, params } = req;
                 const { post_id } = params;
+
+                if (post_id && post_id.length > 50) {
+                    const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
+                    return res.status(422).json({
+                        success: false,
+                        message: message,
+                    });
+                }
+
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                if (!authResult.success) {
+                    return res.status(401).json(authResult);
+                }
 
                 // التحقق من وجود المنشور
                 const post = postsDBManager.findRecord("posts", { post_id });
                 if (!post) {
+                    const message = translationManager.translate('post_not_found', {}, lang);
                     return res.status(404).json({
                         success: false,
-                        message: `المنشور المطلوب غير موجود. ❌`
+                        message: message
                     });
                 }
 
-                const missingFields = getMissingFields(body, ["user_id"]);
-                if (missingFields.length > 0) {
-                    return sendMissingFieldsResponse(res, missingFields);
-                }
+                const isOwner = authResult.user.user_id === post.user_id;
+                const isAdmin = checkUserRole(authResult.user, ["admin"]);
+                const isBanned = convertToBoolean(authResult.user.is_banned); // تأكد من حالة الحظر للمستخدم
 
-                const user = usersDBManager.findRecord("users", { user_id: body?.user_id });
-                if (!user) {
-                    return res.status(404).json({
-                        success: false,
-                        message: `المستخدم بالمعرف ${body?.user_id} غير موجود`
-                    });
-                }
-
-                if (!checkUserAuthentication(user, headers)) {
-                    return sendUnauthorizedResponse(res);
-                }
-
-                if (!checkUserRole(existingUser, ["admin", "moderator", "user"])) {
+                // تحقق من حالة الحظر أولاً
+                if (isBanned) {
+                    const message = translationManager.translate('user_banned_delete_post', { requester: authResult.user.username }, lang);
                     return res.status(403).json({
                         success: false,
-                        message: 'غير مصرح لك بتنفيذ هذا الإجراء. ❌'
+                        message: message
                     });
                 }
+
+                if (!(isOwner || isAdmin)) {
+                    const message = translationManager.translate('not_authorized_delete_post', {}, lang);
+                    return res.status(403).json({
+                        success: false,
+                        message: message
+                    });
+                }
+
                 // حذف الهاشتاقات المرتبطة بالمنشور من قاعدة البيانات
                 postsDBManager.deleteRecord("hashtags", { post_id });
-
                 // حذف المنشور من قاعدة البيانات
-                postsDBManager.deleteRecord("posts", { post_id });
+                postsDBManager.deleteRecord("posts", { post_id, user_id: authResult.user.user_id });
 
+                const message = translationManager.translate('post_deleted', { post_id: post_id }, lang);
                 res.status(200).json({
                     success: true,
-                    message: `تم حذف المنشور بنجاح: ${post_id} ✔️`
+                    post: post,
+                    message: message
                 });
 
             } catch (error) {

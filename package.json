@@ -1,7 +1,7 @@
 {
-    "name": "sahrarally",
+    "name": "hiwarat",
     "version": "1.0.0",
-    "description": "SahraRally description",
+    "description": "Hiwarat is a platform for engaging discussions and dialogues on diverse topics, promoting exchange of ideas and constructive conversations.",
     "main": "src/server.js",
     "type": "module",
     "scripts": {
@@ -20,27 +20,36 @@
         "url": "https://github.com/rn0x"
     },
     "keywords": [
-        "rally",
-        "car",
-        "sahrarally",
-        "offroad"
+        "dialogues",
+        "forum",
+        "discussions",
+        "interactivity",
+        "exchange of opinions",
+        "constructive communication",
+        "mutual dialogue",
+        "collaboration",
+        "mutual respect",
+        "exchange of ideas"
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/rn0x/sahrarally.git"
+        "url": "git+https://github.com/rn0x/hiwarat.git"
     },
     "bugs": {
-        "url": "https://github.com/rn0x/sahrarally/issues"
+        "url": "https://github.com/rn0x/hiwarat/issues"
     },
-    "homepage": "https://github.com/rn0x/Kasahrarallynzislam#readme",
+    "homepage": "https://github.com/rn0x/hiwarat#readme",
     "license": "ISC",
     "dependencies": {
         "bcrypt": "^5.1.1",
         "better-sqlite3": "^9.4.3",
         "body-parser": "^1.20.2",
+        "canvas": "^2.11.2",
+        "captcha-ge": "^1.0.9",
         "compression": "^1.7.4",
         "dotenv": "^16.4.5",
         "express": "^4.18.3",
+        "express-rate-limit": "^7.2.0",
         "fs-extra": "^11.2.0",
         "helmet": "^7.1.0",
         "html-to-text": "^9.0.5",

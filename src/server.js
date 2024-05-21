@@ -5,6 +5,7 @@ const app = express();
 
 import { config } from "./config.js";
 import { logError, logInfo } from "./utils/logger.js";
+import TranslationManager from "./utils/translationManager.js";
 
 import bodyParser from 'body-parser';
 import path from 'node:path';
@@ -12,6 +13,7 @@ import favicon from "serve-favicon";
 import helmet from "helmet";
 import compression from "compression";
 
+const translationManager = new TranslationManager(config.defaultLang);
 const port = config.port;
 
 app.use(helmet(config.helmet));
@@ -56,19 +58,19 @@ app.get("/", (req, res) => {
 
 /* API VERSION 1.0 ROUTES */
 import APIv1Router from "./routes/api_v1.js";
-app.use("/api/v1", APIv1Router(DBManager));
+app.use("/api/v1", APIv1Router(DBManager, translationManager));
 
 const server = app.listen(port, () => {
-  console.log(`[SahraRally] Server started on port http://localhost:${port}`);
+  console.log(`[Hiwarat] Server started on port http://localhost:${port}`);
 });
 
 function sigHandle(signal) {
   logInfo(`${signal} signal received.`);
   server.close((err) => {
     if (err) {
-      console.error("[SahraRally] Error closing server:", err);
+      console.error("[Hiwarat] Error closing server:", err);
     } else {
-      console.log("[SahraRally] Server closed.");
+      console.log("[Hiwarat] Server closed.");
       process.exit(0); // Explicitly exit the process after the server is closed
     }
   });
