@@ -25,13 +25,11 @@ const DBdir = path.join(root, "src", "database");
 const usersDBPath = path.join(DBdir, 'users.db');
 const postsDBPath = path.join(DBdir, 'posts.db');
 const reportsFavsDBPath = path.join(DBdir, 'reports_favorites.db');
-const dailyActivityDBPath = path.join(DBdir, 'daily_activity.db');
 
 // إنشاء كائنات DatabaseManager لكل قاعدة بيانات
 const usersDBManager = new DatabaseManager(usersDBPath);
 const postsDBManager = new DatabaseManager(postsDBPath);
 const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
-const dailyActivityDBManager = new DatabaseManager(dailyActivityDBPath);
 
 // قاعدة بيانات المستخدمين 
 async function createUsersDatabase() {
