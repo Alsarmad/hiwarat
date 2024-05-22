@@ -38,17 +38,17 @@ import DatabaseManager from './database/DatabaseManager.js';
 const DBdir = config.paths.database;
 const usersDBPath = path.join(DBdir, 'users.db');
 const postsDBPath = path.join(DBdir, 'posts.db');
-const reportsFavsDBPath = path.join(DBdir, 'reports_favorites.db');
+const reportsDBPath = path.join(DBdir, 'reports.db');
 const usersDBManager = new DatabaseManager(usersDBPath);
 const postsDBManager = new DatabaseManager(postsDBPath);
-const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
+const reportsDBManager = new DatabaseManager(reportsDBPath);
 usersDBManager.openDatabase();
 postsDBManager.openDatabase();
-reportsFavsDBManager.openDatabase();
+reportsDBManager.openDatabase();
 const DBManager = {
   usersDBManager,
   postsDBManager,
-  reportsFavsDBManager
+  reportsDBManager
 }
 
 // HOME PAGE

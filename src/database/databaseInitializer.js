@@ -24,12 +24,12 @@ const root = path.resolve(process.cwd());
 const DBdir = path.join(root, "src", "database");
 const usersDBPath = path.join(DBdir, 'users.db');
 const postsDBPath = path.join(DBdir, 'posts.db');
-const reportsFavsDBPath = path.join(DBdir, 'reports_favorites.db');
+const reportsDBPath = path.join(DBdir, 'reports.db');
 
 // إنشاء كائنات DatabaseManager لكل قاعدة بيانات
 const usersDBManager = new DatabaseManager(usersDBPath);
 const postsDBManager = new DatabaseManager(postsDBPath);
-const reportsFavsDBManager = new DatabaseManager(reportsFavsDBPath);
+const reportsDBManager = new DatabaseManager(reportsDBPath);
 
 // قاعدة بيانات المستخدمين 
 async function createUsersDatabase() {
@@ -135,30 +135,21 @@ function createPostsDatabase() {
 }
 
 // قاعدة بيانات البلاغات والمفضلة
-function createReportsFavsDatabase() {
-    reportsFavsDBManager.openDatabase();
+function createReportsDatabase() {
+    reportsDBManager.openDatabase();
 
     // جدول البلاغات (Reports Table)
-    reportsFavsDBManager.createTable('reports', {
-        report_id: reportsFavsDBManager.DataTypes.TEXT, // رقم مُعرف فريد لكل بلاغ.
-        user_id: reportsFavsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الذي قام بالبلاغ.
-        reported_item_type: reportsFavsDBManager.DataTypes.TEXT, // نوع العنصر المُبلغ عنه منشور ام تعليق.
-        reported_item_id: reportsFavsDBManager.DataTypes.TEXT, // رقم مُعرف للعنصر المُبلغ عنه.
-        report_type: reportsFavsDBManager.DataTypes.TEXT, // نوع البلاغ (مثل: سُب، تحرش، إلخ).
-        report_description: reportsFavsDBManager.DataTypes.TEXT, // وصف البلاغ.
-        created_at: reportsFavsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
+    reportsDBManager.createTable('reports', {
+        report_id: reportsDBManager.DataTypes.TEXT, // رقم مُعرف فريد لكل بلاغ.
+        user_id: reportsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الذي قام بالبلاغ.
+        reported_item_type: reportsDBManager.DataTypes.TEXT, // نوع العنصر المُبلغ عنه منشور ام تعليق.
+        reported_item_id: reportsDBManager.DataTypes.TEXT, // رقم مُعرف للعنصر المُبلغ عنه.
+        report_type: reportsDBManager.DataTypes.TEXT, // نوع البلاغ (مثل: سُب، تحرش، إلخ).
+        report_description: reportsDBManager.DataTypes.TEXT, // وصف البلاغ.
+        created_at: reportsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
     });
 
-    // جدول المفضلة (Favorites Table)
-    reportsFavsDBManager.createTable('favorites', {
-        favorite_id: reportsFavsDBManager.DataTypes.TEXT, // مُعرف فريد لكل عنصر مفضل.
-        user_id: reportsFavsDBManager.DataTypes.TEXT, // مُعرف للمستخدم الذي قام بإضافة العنصر للمفضلة.
-        favorited_item_type: reportsFavsDBManager.DataTypes.TEXT, // نوع العنصر المُضاف للمفضلة (مثل: منشور، تعليق، إلخ).
-        favorited_item_id: reportsFavsDBManager.DataTypes.TEXT, // مُعرف للعنصر المُضاف للمفضلة.
-        created_at: reportsFavsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
-    });
-
-    reportsFavsDBManager.closeDatabase();
+    reportsDBManager.closeDatabase();
 }
 
 if (!fs.existsSync(usersDBPath)) {
@@ -169,9 +160,9 @@ if (!fs.existsSync(postsDBPath)) {
     logInfo(`Database created: ${postsDBPath}`);
     createPostsDatabase();
 }
-if (!fs.existsSync(reportsFavsDBPath)) {
-    logInfo(`Database created: ${reportsFavsDBPath}`);
-    createReportsFavsDatabase();
+if (!fs.existsSync(reportsDBPath)) {
+    logInfo(`Database created: ${reportsDBPath}`);
+    createReportsDatabase();
 }
 
 else {
