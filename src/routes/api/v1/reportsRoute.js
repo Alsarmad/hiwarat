@@ -16,6 +16,6 @@ export default async (router, config, logger) => {
         // حذف بلاغ بواسطة المعرف
         router.delete('/reports/:id', ReportsController.deleteReport);
     } catch (error) {
-        logError(error);
+        logError("An error occurred while processing the request", error);
     }
 }

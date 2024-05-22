@@ -53,7 +53,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     hashtags: hashtags.map(tag => tag.hashtag_text)
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -92,7 +92,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     hashtagsPosts: hashtagsPosts
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -167,6 +167,6 @@ export default async (router, config, logger, utils, DBManager) => {
         });
 
     } catch (error) {
-        logError(error);
+        logError("An error occurred while processing the request", error);
     }
 }

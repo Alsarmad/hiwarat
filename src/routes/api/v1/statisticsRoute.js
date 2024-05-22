@@ -16,6 +16,6 @@ export default async (router, config, logger) => {
         // حذف إحصائية بواسطة المعرف
         router.delete('/statistics/:id', StatisticsController.deleteStatistic);
     } catch (error) {
-        logError(error);
+        logError("An error occurred while processing the request", error);
     }
 }

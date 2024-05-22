@@ -33,7 +33,6 @@ export default async (router, config, logger, utils, DBManager) => {
                 });
             },
             headers: true,
-
         });
 
         // جلب المنشورات مع دعم تقسيم الصفحات وعرض المنشورات المثبتة في جميع الصفحات.
@@ -83,7 +82,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     })
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -173,7 +172,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     message: message
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -206,7 +205,7 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -339,7 +338,7 @@ export default async (router, config, logger, utils, DBManager) => {
                 });
 
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -409,12 +408,12 @@ export default async (router, config, logger, utils, DBManager) => {
                 });
 
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
 
     } catch (error) {
-        logError(error);
+        logError("An error occurred while processing the request", error);
     }
 }

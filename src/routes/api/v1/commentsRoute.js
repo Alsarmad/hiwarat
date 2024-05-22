@@ -67,7 +67,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     comments: comments
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -138,7 +138,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     message: message
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -168,7 +168,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     comment: comment
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -256,7 +256,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     message: message
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
@@ -318,12 +318,12 @@ export default async (router, config, logger, utils, DBManager) => {
                     message: message
                 });
             } catch (error) {
-                logError(error);
+                logError("An error occurred while processing the request", error);
                 return res.status(500).json({ message: `${error}` });
             }
         });
 
     } catch (error) {
-        logError(error);
+        logError("An error occurred while processing the request", error);
     }
 }
