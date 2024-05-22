@@ -47,7 +47,7 @@ class TranslationManager {
             const data = await fs.promises.readFile(filePath, 'utf-8');
             this.translations[lang] = JSON.parse(data);
         } catch (error) {
-            throw new Error(`فشل في تحميل ملف الترجمة للغة: ${lang}`);
+            throw new Error(`Failed to load translation file for language: ${lang}`);
         }
     }
 

@@ -53,6 +53,7 @@
         "fs-extra": "^11.2.0",
         "helmet": "^7.1.0",
         "html-to-text": "^9.0.5",
+        "marked": "^12.0.2",
         "node-fetch": "^3.3.2",
         "serve-favicon": "^2.5.0"
     },

@@ -1,5 +1,5 @@
+import * as marked from 'marked';
 import { convert } from 'html-to-text';
-
 
 export default async (router, config, logger, utils, DBManager) => {
     const { logError } = logger;
@@ -18,7 +18,7 @@ export default async (router, config, logger, utils, DBManager) => {
             dataValidator
         } = utils;
 
-        const { postsDBManager, usersDBManager } = DBManager;
+        const { postsDBManager } = DBManager;
         const MAX_COMMENTS_PER_PAGE = 20;
         const lang = config.defaultLang;
 
@@ -115,12 +115,17 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 const comment_id = generateUniqueId(35);
                 const currentTime = new Date().toISOString();
+                // عملية التحويل من ماركداون إلى HTML
+                const htmlContent = marked(body.comment_content);
+                // تحويل HTML إلى نص عادي
+                const plainTextContent = convert(htmlContent, { wordwrap: false });
+
                 const dataComment = {
                     comment_id,
                     post_id: body.post_id,
                     user_id: authResult.user.user_id,
-                    comment_content: body.comment_content,
-                    comment_content_raw: convert(body.comment_content, { wordwrap: false }) || body.comment_content,
+                    comment_content: htmlContent,
+                    comment_content_raw: plainTextContent || body.comment_content,
                     created_at: currentTime,
                     updated_at: currentTime,
                 };
@@ -225,12 +230,17 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
+                // عملية التحويل من ماركداون إلى HTML
+                const htmlContent = marked(body?.comment_content ? body.comment_content : comment.comment_content);
+                // تحويل HTML إلى نص عادي
+                const plainTextContent = convert(htmlContent, { wordwrap: false });
+
                 const updatedComment = {
                     comment_id: comment.comment_id,
                     post_id: comment.post_id,
                     user_id: comment.user_id,
-                    comment_content: body?.comment_content ? body.comment_content : comment.comment_content,
-                    comment_content_raw: body?.comment_content ? convert(body.comment_content, { wordwrap: false }) : comment.comment_content_raw,
+                    comment_content: htmlContent,
+                    comment_content_raw:plainTextContent,
                     created_at: comment.created_at,
                     updated_at: new Date().toISOString()
                 };

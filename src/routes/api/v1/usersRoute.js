@@ -15,7 +15,7 @@ export default async (router, config, logger, utils, DBManager) => {
             generateUniqueId,
             dataValidator,
         } = utils;
-        const { usersDBManager } = DBManager;
+        const { usersDBManager, postsDBManager } = DBManager;
         const MAX_USERS_PER_PAGE = 20;
         const lang = config.defaultLang;
 
@@ -359,6 +359,18 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 usersDBManager.deleteRecord("users", { username: username.toLowerCase() });
+
+                const postRecords = postsDBManager.findRecordAll("posts", "user_id", user.user_id);
+                postRecords.forEach(post => {
+                    // حذف المنشورات من قاعدة البيانات
+                    postsDBManager.deleteRecord("posts", { post_id: post.post_id });
+                    // حذف التعليقات المرتبطة بالمنشورات من قاعدة البيانات
+                    postsDBManager.deleteRecord("comments", { post_id: post.post_id });
+                    // حذف الهاشتاقات المرتبطة بالمنشورات من قاعدة البيانات
+                    postsDBManager.deleteRecord("hashtags", { post_id: post.post_id });
+
+                });
+
                 const message = translationManager.translate('user_deleted', { username: username.toLowerCase() }, lang);
                 res.status(200).json({
                     success: true,

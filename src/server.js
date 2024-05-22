@@ -61,16 +61,18 @@ import APIv1Router from "./routes/api_v1.js";
 app.use("/api/v1", APIv1Router(DBManager, translationManager));
 
 const server = app.listen(port, () => {
-  console.log(`[Hiwarat] Server started on port http://localhost:${port}`);
+  const megServer = `[Hiwarat] Server started on port http://localhost:${port}`
+  console.log(megServer);
+  logInfo(megServer);
 });
 
 function sigHandle(signal) {
   logInfo(`${signal} signal received.`);
   server.close((err) => {
     if (err) {
-      console.error("[Hiwarat] Error closing server:", err);
+      logError("[Hiwarat] Error closing server:", err);
     } else {
-      console.log("[Hiwarat] Server closed.");
+      logInfo("[Hiwarat] Server closed.");
       process.exit(0); // Explicitly exit the process after the server is closed
     }
   });

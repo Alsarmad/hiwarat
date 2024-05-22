@@ -1,3 +1,4 @@
+import * as marked from 'marked';
 import { convert } from 'html-to-text';
 
 export default async (router, config, logger, utils, DBManager) => {
@@ -116,18 +117,23 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                // التحقق وتنظيف الهاشتاقات المكررة
-                const uniqueHashtags = [...new Set(body.hashtags)].slice(0, 10);
+                // التحقق وتنظيف الهاشتاجات المكررة
+                const hashtags = body.hashtags.map(tag => tag?.toString()?.trim()?.toLowerCase()?.replace(/\s+/g, '_'));
+                const uniqueHashtags = [...new Set(hashtags)].slice(0, 10);
                 // معرف فريد للمنشور
                 const post_id = generateUniqueId(35);
                 // الوقت الحالي
                 const currentTime = new Date().toISOString();
+                // عملية التحويل من ماركداون إلى HTML
+                const htmlContent = marked(body.post_content);
+                // تحويل HTML إلى نص عادي
+                const plainTextContent = convert(htmlContent, { wordwrap: false });
                 const dataPost = {
                     post_id,
                     user_id: authResult.user.user_id,
                     post_title: convert(body.post_title, { wordwrap: false }),
-                    post_content: body.post_content,
-                    post_content_raw: convert(body.post_content, { wordwrap: false }),
+                    post_content: htmlContent || body.post_content,
+                    post_content_raw: plainTextContent || htmlContent,
                     hashtags: uniqueHashtags,
                     is_pinned: convertToBoolean(body?.is_pinned) ? 1 : 0,
                     created_at: currentTime,
@@ -181,8 +187,11 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
                 return res.status(200).json({
                     success: true,
-                    post: post,
-                    hashtags: tryParseJSON(post?.hashtags)
+                    post: {
+                        ...post,
+                        hashtags: tryParseJSON(post?.hashtags)
+                    },
+
                 });
             } catch (error) {
                 logError(error);
@@ -260,7 +269,8 @@ export default async (router, config, logger, utils, DBManager) => {
                 const currentTime = new Date().toISOString();
 
                 // الهاشتاقات الجديدة لإضافتها
-                const newHashtags = body?.hashtags?.slice(0, 10) || tryParseJSON(post.hashtags);
+                // const newHashtags = body?.hashtags?.slice(0, 10) || tryParseJSON(post.hashtags);
+                const newHashtags = (body?.hashtags?.map(tag => tag?.toString()?.trim()?.toLowerCase()?.replace(/\s+/g, '_')) || tryParseJSON(post.hashtags))?.slice(0, 10);
 
                 // الهاشتاقات القديمة في المنشور
                 const oldHashtags = tryParseJSON(post.hashtags)
@@ -291,16 +301,20 @@ export default async (router, config, logger, utils, DBManager) => {
                     }
                 }
 
+                // عملية التحويل من ماركداون إلى HTML
+                const htmlContent = marked(body?.post_content ? body.post_content : post.post_content);
+                // تحويل HTML إلى نص عادي
+                const plainTextContent = convert(htmlContent, { wordwrap: false });
                 const updatedPost = {
-                    post_content: body.post_content || post.post_content,
-                    post_content_raw: convert(body.post_content || post.post_content, { wordwrap: false }),
+                    post_content: htmlContent || post.post_content,
+                    post_content_raw: plainTextContent || post.post_content_raw,
                     hashtags: newHashtags,
                     is_pinned: convertToBoolean(body?.is_pinned) ? 1 : convertToBoolean(post?.is_pinned) ? 1 : 0,
                     updated_at: currentTime,
                 }
 
                 // تحديث المنشور بالبيانات الجديدة
-                postsDBManager.updateRecord("posts", { post_id: post_id, user_id: post.user_id }, updatedPost);
+                postsDBManager.updateRecord("posts", { post_id: post_id }, updatedPost);
 
                 const message = translationManager.translate('post_updated', { post_id: post_id }, lang);
                 res.status(200).json({
@@ -371,7 +385,9 @@ export default async (router, config, logger, utils, DBManager) => {
                 // حذف الهاشتاقات المرتبطة بالمنشور من قاعدة البيانات
                 postsDBManager.deleteRecord("hashtags", { post_id });
                 // حذف المنشور من قاعدة البيانات
-                postsDBManager.deleteRecord("posts", { post_id, user_id: authResult.user.user_id });
+                postsDBManager.deleteRecord("posts", { post_id });
+                // حذف التعليقات المرتبطة بالمنشور من قاعدة البيانات
+                postsDBManager.deleteRecord("comments", { post_id });
 
                 const message = translationManager.translate('post_deleted', { post_id: post_id }, lang);
                 res.status(200).json({

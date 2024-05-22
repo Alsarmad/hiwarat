@@ -19,7 +19,7 @@ function getMissingFields(body, requiredFields) {
 function sendMissingFieldsResponse(res, missingFields) {
     return res.status(401).json({
         success: false,
-        message: `الرجاء توفير البيانات "${missingFields.join('", "')}`
+        message: `Please provide the data for "${missingFields.join('", "')}`
     });
 }
 
@@ -41,26 +41,26 @@ function stripSensitiveFields(opj) {
  */
 async function checkUserAuthentication({ username, password }, usersDBManager) {
     if (!username || !password) {
-        return { success: false, user: null, message: "اسم المستخدم أو كلمة المرور غير محددة" };
+        return { success: false, user: null, message: "Username or password is not specified." };
     }
 
     const user = usersDBManager.findRecord("users", { username: username?.toLowerCase() });
     if (!user) {
-        return { success: false, user: null, message: "المستخدم غير موجود" };
+        return { success: false, user: null, message: "The user does not exist." };
     }
 
     // التحقق من كلمة المرور
     const { isMatch } = await passwordHandler({ hashedPassword: user.hashedPassword, plainPassword: password }, 'compare');
     if (!isMatch) {
-        return { success: false, user: null, message: "كلمة المرور غير صحيحة" };
+        return { success: false, user: null, message: "The password is incorrect." };
     }
 
     // التحقق من حالة تفعيل العضوية
     if (!convertToBoolean(user.active)) {
-        return { success: false, user: null, message: "الحساب غير مفعل" };
+        return { success: false, user: null, message: "The account is not activated." };
     }
 
-    return { success: true, user: stripSensitiveFields(user), message: "تم التحقق بنجاح" };
+    return { success: true, user: stripSensitiveFields(user), message: "Verification successful." };
 }
 
 /**
