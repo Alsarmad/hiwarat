@@ -417,7 +417,7 @@ export default class DatabaseManager {
      */
     getPinnedPosts() {
         try {
-            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 1 ORDER BY created_at DESC`);
+            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 1 ORDER BY ROWID DESC`);
             return statement.all();
         } catch (error) {
             logError(`حدث خطأ أثناء جلب المنشورات المثبتة:`, error);
@@ -435,7 +435,7 @@ export default class DatabaseManager {
      */
     getNonPinnedPosts(limit, offset) {
         try {
-            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?`);
+            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 0 ORDER BY ROWID DESC LIMIT ? OFFSET ?`);
             return statement.all(limit, offset);
         } catch (error) {
             logError(`حدث خطأ أثناء جلب المنشورات غير المثبتة:`, error);
