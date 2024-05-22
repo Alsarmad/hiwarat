@@ -443,4 +443,72 @@ export default class DatabaseManager {
         }
     }
 
+    /**
+     * يحسب عدد السجلات في جدول معين بناءً على معايير محددة.
+     *
+     * @param {string} tableName - اسم الجدول في قاعدة البيانات.
+     * @param {Object} criteria - كائن يحتوي على المعايير لتصفية السجلات. المفاتيح هي أسماء الأعمدة والقيم هي القيم المطلوبة.
+     * @returns {number} - عدد السجلات التي تطابق المعايير المحددة.
+     * @throws {Error} - في حال حدوث خطأ أثناء الاستعلام عن قاعدة البيانات.
+     */
+    countRecords(tableName, criteria) {
+        try {
+            // التحقق من وجود الجدول
+            const tableExists = this.tableExists(tableName);
+            if (!tableExists) {
+                logError(`الجدول ${tableName} غير موجود.`);
+                return 0;
+            }
+
+            // بناء شرط البحث
+            const columns = this.getColumnNames(tableName);
+            const conditions = [];
+            const values = [];
+            for (const [column, value] of Object.entries(criteria)) {
+                if (!columns.includes(column)) {
+                    logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
+                    return 0;
+                }
+                conditions.push(`${column} = ?`);
+                values.push(value);
+            }
+            const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+            // استعلام قاعدة البيانات لجلب عدد السجلات
+            const statement = this.db.prepare(`SELECT COUNT(*) as count FROM ${tableName} ${whereClause}`);
+            const result = statement.get(...values);
+            return result.count;
+        } catch (error) {
+            logError(`حدث خطأ أثناء حساب عدد السجلات في جدول ${tableName}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * يحسب عدد جميع السجلات في جدول معين.
+     *
+     * @param {string} tableName - اسم الجدول في قاعدة البيانات.
+     * @returns {number} - عدد جميع السجلات في الجدول.
+     * @throws {Error} - في حال حدوث خطأ أثناء الاستعلام عن قاعدة البيانات.
+     */
+    countAllRecords(tableName) {
+        try {
+            // التحقق من وجود الجدول
+            const tableExists = this.tableExists(tableName);
+            if (!tableExists) {
+                logError(`الجدول ${tableName} غير موجود.`);
+                return 0;
+            }
+
+            // استعلام قاعدة البيانات لجلب عدد جميع السجلات
+            const statement = this.db.prepare(`SELECT COUNT(*) as count FROM ${tableName}`);
+            const result = statement.get();
+            return result.count;
+        } catch (error) {
+            logError(`حدث خطأ أثناء حساب عدد جميع السجلات في جدول ${tableName}:`, error);
+            throw error;
+        }
+    }
+
+
 }
