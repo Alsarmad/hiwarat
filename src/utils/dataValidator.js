@@ -143,6 +143,34 @@ class DataValidator {
                     minLength: translationManager.translate('comment_content_minLength', { length: 10 }, lang),
                 }
             },
+            reported_item_type: {
+                allowedValues: ["post", "comment"],
+                messages: {
+                    allowedValues: translationManager.translate('reported_item_type_allowedValues', {}, lang)
+                }
+            },
+            reported_item_id: {
+                maxLength: 50,
+                minLength: 5,
+                messages: {
+                    maxLength: translationManager.translate('report_id_maxLength', { length: 50 }, lang),
+                    minLength: translationManager.translate('report_id_minLength', { length: 5 }, lang),
+                }
+            },
+            report_type: {
+                allowedValues: ["سُب", "تحرش", "بريد عشوائي", "خطاب كراهية", "عنف", "انتهاك حقوق الطبع والنشر", "محتوى غير لائق", "أخرى"],
+                messages: {
+                    allowedValues: translationManager.translate('report_type_allowedValues', {}, lang)
+                }
+            },
+            report_description: {
+                maxLength: 200,
+                minLength: 5,
+                messages: {
+                    maxLength: translationManager.translate('report_description_maxLength', { length: 200 }, lang),
+                    minLength: translationManager.translate('report_description_minLength', { length: 5 }, lang),
+                }
+            },
         };
     }
 

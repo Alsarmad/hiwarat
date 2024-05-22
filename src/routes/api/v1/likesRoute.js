@@ -16,7 +16,7 @@ export default async (router, config, logger, utils, DBManager) => {
         const lang = config.defaultLang;
 
         // إنشاء إعجاب جديد
-        router.post('/likes', async (req, res) => {
+        router.post('/create-likes', async (req, res) => {
             try {
 
                 const { body, headers } = req;
