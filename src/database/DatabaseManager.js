@@ -408,4 +408,39 @@ export default class DatabaseManager {
             throw error;
         }
     }
+
+    /**
+     * جلب جميع المنشورات المثبتة.
+     * 
+     * @returns {Array} قائمة المنشورات المثبتة مرتبة من الأحدث إلى الأقدم.
+     * @throws {Error} في حالة حدوث خطأ أثناء جلب المنشورات المثبتة.
+     */
+    getPinnedPosts() {
+        try {
+            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 1 ORDER BY created_at DESC`);
+            return statement.all();
+        } catch (error) {
+            logError(`حدث خطأ أثناء جلب المنشورات المثبتة:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * جلب المنشورات غير المثبتة مع تقسيم الصفحات.
+     * 
+     * @param {number} limit - عدد المنشورات التي يتم جلبها في الصفحة الواحدة.
+     * @param {number} offset - النقطة التي يبدأ منها الاستعلام لجلب المنشورات.
+     * @returns {Array} قائمة المنشورات غير المثبتة مرتبة من الأحدث إلى الأقدم مع تطبيق التصفية.
+     * @throws {Error} في حالة حدوث خطأ أثناء جلب المنشورات غير المثبتة.
+     */
+    getNonPinnedPosts(limit, offset) {
+        try {
+            const statement = this.db.prepare(`SELECT * FROM posts WHERE is_pinned = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?`);
+            return statement.all(limit, offset);
+        } catch (error) {
+            logError(`حدث خطأ أثناء جلب المنشورات غير المثبتة:`, error);
+            throw error;
+        }
+    }
+
 }

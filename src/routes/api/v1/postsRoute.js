@@ -36,13 +36,14 @@ export default async (router, config, logger, utils, DBManager) => {
 
         });
 
-        // الحصول على كل المنشورات
-        router.get('/posts', (req, res) => {
+        // جلب المنشورات مع دعم تقسيم الصفحات وعرض المنشورات المثبتة في جميع الصفحات.
+        router.get('/posts', async (req, res) => {
             try {
                 const { query } = req;
                 const page = parseInt(query.page) || 1;
                 let limit = parseInt(query.limit) || MAX_POSTS_PER_PAGE;
                 limit = Math.min(limit, MAX_POSTS_PER_PAGE);
+
                 if (parseInt(query.limit) > MAX_POSTS_PER_PAGE) {
                     const message = translationManager.translate('max_posts_per_page_exceeded', { max_posts_per_page: MAX_POSTS_PER_PAGE }, lang);
                     return res.status(400).json({
@@ -50,9 +51,19 @@ export default async (router, config, logger, utils, DBManager) => {
                         message: message,
                     });
                 }
-                const offset = (page - 1) * limit; // حساب النقطة التي يبدأ منها الاستعلام
-                const posts = postsDBManager.getRecordsPaginated("posts", limit, offset);
-                if (posts.length === 0) {
+
+                const offset = (page - 1) * limit;
+
+                // جلب المنشورات المثبتة
+                const pinnedPosts = postsDBManager.getPinnedPosts();
+
+                // جلب المنشورات غير المثبتة مع تطبيق التصفية والصفحات
+                const nonPinnedPosts = postsDBManager.getNonPinnedPosts(limit, offset);
+
+                // دمج المنشورات المثبتة مع المنشورات غير المثبتة
+                const allPosts = [...pinnedPosts, ...nonPinnedPosts];
+
+                if (allPosts.length === 0) {
                     const message = translationManager.translate('no_records_found', {}, lang);
                     return res.status(404).json({
                         success: false,
@@ -60,9 +71,10 @@ export default async (router, config, logger, utils, DBManager) => {
                         message: message
                     });
                 }
+
                 return res.status(200).json({
                     success: true,
-                    posts: posts.map(post => {
+                    posts: allPosts.map(post => {
                         return {
                             ...post,
                             hashtags: tryParseJSON(post?.hashtags),
