@@ -39,7 +39,7 @@
         "url": "https://github.com/rn0x/hiwarat/issues"
     },
     "homepage": "https://github.com/rn0x/hiwarat#readme",
-    "license": "ISC",
+    "license": "GPL-3.0",
     "dependencies": {
         "bcrypt": "^5.1.1",
         "better-sqlite3": "^10.0.0",
