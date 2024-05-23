@@ -85,7 +85,7 @@
     "reported_item_type_allowedValues": "يجب ان يكون نوع العنصر المُبلغ عنه إما post او comment.",
     "report_id_maxLength": "معرف المنشور او التعليق طويل جدًا. يجب أن لا يتجاوز {length} حرفًا.",
     "report_id_minLength": "معرف المنشور او التعليق قصير جدًا. يجب أن لا يقل عن {length} حرفًا.",
-    "report_type_allowedValues": "يجب ان تكون فئة البلاغ  إما \"سُب\" او \"تحرش\" او \"بريد عشوائي\" او \"خطاب كراهية\" او \"عنف\" او \"انتهاك حقوق الطبع والنشر\" او \"محتوى غير لائق\" او \"أخرى\".",
+    "report_type_allowedValues": "يجب ان تكون فئة البلاغ  إما \"abuse\", \"harassment\", \"spam\", \"hate speech\", \"violence\", \"copyright infringement\", \"inappropriate content\", or \"other\".",
     "report_description_maxLength": "وصف البلاغ طويل جدًا. يجب أن لا يتجاوز {length} حرفًا.",
     "report_description_minLength": "وصف البلاغ قصير جدًا. يجب أن لا يقل عن {length} حرفًا.",
     "report_created": "تم إنشاء البلاغ بالمعرف: {report_id}.",

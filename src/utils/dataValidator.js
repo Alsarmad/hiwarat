@@ -74,7 +74,7 @@ class DataValidator {
                 }
             },
             gender: {
-                allowedValues: ["ذكر", "انثى"],
+                allowedValues: ["ذكر", "انثى", "male", "female"],
                 messages: {
                     allowedValues: translationManager.translate('gender_allowedValues', {}, lang)
                 }
@@ -158,7 +158,7 @@ class DataValidator {
                 }
             },
             report_type: {
-                allowedValues: ["سُب", "تحرش", "بريد عشوائي", "خطاب كراهية", "عنف", "انتهاك حقوق الطبع والنشر", "محتوى غير لائق", "أخرى"],
+                allowedValues: ["abuse", "harassment", "spam", "hate speech", "violence", "copyright infringement", "inappropriate content", "other"],
                 messages: {
                     allowedValues: translationManager.translate('report_type_allowedValues', {}, lang)
                 }
