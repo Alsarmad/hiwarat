@@ -20,6 +20,18 @@ export const config = {
     /* Config Website */
     website_name: process.env.WEBSITE_NAME,
 
+    /* Session */
+    session: {
+        secret: process.env.SESSION_SECRET, // يجب أن تكون هذه القيمة سرية وطويلة ومعقدة
+        resave: false, // لا تحفظ الجلسات إذا لم يكن هناك تغييرات
+        saveUninitialized: true, // حفظ الجلسات الجديدة حتى لو لم تكن هناك بيانات
+        cookie: {
+            maxAge: 24 * 60 * 60 * 1000,// صلاحية الجلسة لمدة 24 ساعة
+            path: '/', // المسار الافتراضي لملف تعريف الارتباط
+            httpOnly: true, // يجعل ملف تعريف الارتباط غير قابل للوصول بواسطة JavaScript في المتصفح
+            secure: false // ملف تعريف الارتباط لن يُرسل إلا عبر اتصالات HTTPS إذا تم تعيينه على true
+        }
+    },
     /* Helmet */
     helmet: {
         contentSecurityPolicy: {

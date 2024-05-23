@@ -196,6 +196,20 @@ export default async (router, config, logger, utils, DBManager) => {
                         message: message
                     });
                 }
+
+                // التحقق من وجود سجل للمشاهدات في الجلسة
+                if (!req.session.views) {
+                    req.session.views = {};
+                }
+
+                // التحقق مما إذا كان المنشور قد تمت مشاهدته في هذه الجلسة
+                if (!req.session.views[post_id]) {
+                    req.session.views[post_id] = true;
+
+                    // زيادة عدد المشاهدات في قاعدة البيانات
+                    postsDBManager.incrementViewCount(post_id);
+                }
+
                 return res.status(200).json({
                     success: true,
                     post: {

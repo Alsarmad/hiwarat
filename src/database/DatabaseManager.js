@@ -510,5 +510,29 @@ export default class DatabaseManager {
         }
     }
 
-
+    /**
+     * زيادة عدد المشاهدات لمنشور معين.
+     * @param {string} postId معرف المنشور.
+     */
+    incrementViewCount(postId) {
+        try {
+            // التحقق من وجود الجدول
+            const tableExists = this.tableExists("views");
+            if (!tableExists) {
+                logError(`الجدول ${tableName} غير موجود.`);
+                return 0;
+            }
+            const record = this.findRecord('views', { post_id: postId });
+            if (record) {
+                const newCount = record.view_count + 1;
+                this.updateRecord('views', { post_id: postId }, { view_count: newCount });
+            } else {
+                this.insertRecord('views', { post_id: postId, view_count: 1 });
+            }
+            logInfo(`تمت زيادة عدد المشاهدات للمنشور ${postId}.`);
+        } catch (error) {
+            logError(`حدث خطأ أثناء زيادة عدد المشاهدات للمنشور ${postId}:`, error);
+            throw error;
+        }
+    }
 }

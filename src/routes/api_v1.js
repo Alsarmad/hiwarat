@@ -11,6 +11,7 @@ import commentsRoute from "./api/v1/commentsRoute.js";
 import hashtagsRoute from "./api/v1/hashtagsRoute.js";
 import likesRoute from "./api/v1/likesRoute.js";
 import reportsRoute from "./api/v1/reportsRoute.js";
+import statisticsRoute from "./api/v1/statisticsRoute.js";
 
 const logger = { logError, logInfo };
 const router = Router();
@@ -49,6 +50,9 @@ export default (DBManager, translationManager) => {
 
     /* REPORTS ROUTER */
     reportsRoute(router, config, logger, utils, DBManager);
+
+    /* STATISTICS ROUTER */
+    statisticsRoute(router, config, logger, utils, DBManager);
 
 
     // Handle undefined routes (404)

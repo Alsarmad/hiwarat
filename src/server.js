@@ -7,6 +7,7 @@ import { config } from "./config.js";
 import { logError, logInfo } from "./utils/logger.js";
 import TranslationManager from "./utils/translationManager.js";
 
+import session from 'express-session';
 import bodyParser from 'body-parser';
 import path from 'node:path';
 import favicon from "serve-favicon";
@@ -28,6 +29,9 @@ app.set("views", config.paths.views);
 app.use(bodyParser.urlencoded({ extended: config.bodyParser.extended }));
 app.use(bodyParser.json({ limit: config.bodyParser.limit }));
 app.disable('x-powered-by');
+
+// إعداد express-session
+app.use(session(config.session));
 
 
 // يقوم هذا الملف بإنشاء قواعد البيانات المختلفة وجداولها.

@@ -120,15 +120,10 @@ function createPostsDatabase() {
         created_at: postsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
     });
 
-    // جدول الإحصائيات (Statistics Table)
-    postsDBManager.createTable('statistics', {
-        stat_id: postsDBManager.DataTypes.TEXT, // مُعرف فريد لكل إحصائية.
-        post_id: postsDBManager.DataTypes.TEXT, // مُعرف للمنشور المرتبط بالإحصائية.
-        likes_count: postsDBManager.DataTypes.INTEGER, // عدد الإعجابات على المنشور.
-        comments_count: postsDBManager.DataTypes.INTEGER, // عدد التعليقات على المنشور.
-        shares_count: postsDBManager.DataTypes.INTEGER, // عدد المشاركات على المنشور.
-        created_at: postsDBManager.DataTypes.TEXT, // تاريخ الإنشاء.
-        updated_at: postsDBManager.DataTypes.TEXT // تاريخ آخر تحديث.
+    // جدول المشاهدات (Views Table)
+    postsDBManager.createTable('views', {
+        post_id: postsDBManager.DataTypes.TEXT, // مُعرف للمنشور المرتبط بالمشاهدة.
+        view_count: postsDBManager.DataTypes.INTEGER, // عدد المشاهدات على المنشور.
     });
 
     postsDBManager.closeDatabase();

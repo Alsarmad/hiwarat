@@ -80,7 +80,6 @@
     "like_id_too_long": "طول معرف الإعجاب يجب ألا يتجاوز {length} حرفًا.",
     "not_authorized_delete_like": "غير مصرح لك بحذف هذا الإعجاب.",
     "like_deleted": "تم حذف الإعجاب بنجاح: {like_id}.",
-    "__________": "_________________",
     "max_reports_per_page_exceeded": "لقد تجاوزت الحد الأقصى للبلاغات في الصفحة الواحدة وهو {max_reports_per_page}.",
     "user_banned_create_report": "المستخدم @{requester} محظور ولا يُسمح له بإنشاء بلاغ.",
     "reported_item_type_allowedValues": "يجب ان يكون نوع العنصر المُبلغ عنه إما post او comment.",
