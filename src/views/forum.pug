@@ -1,0 +1,157 @@
+extends ./partials/layout.pug
+
+block content
+    section#forum_box(dir=dir)
+        div#forum_box_title
+            h1 المنشورات
+            nav
+                ol#page-navigation(style=`${dir === "rtl" ? "left: 0px;" : "right: 0px;"}`)
+                    //- روابط التنقل بين الصفحات سيتم توليدها ديناميكيًا بواسطة JavaScript
+        ol#forum_box_posts
+            //- قائمة المنشورات التي سيتم تحديثها بواسطة JavaScript
+            li.placeholder Loading posts...
+block script
+    script.
+        let getElapsedTime = !{getElapsedTime};
+        let varDir = !{JSON.stringify(dir)};
+        let lang = !{JSON.stringify(lang)};
+        document.addEventListener('DOMContentLoaded', function() {
+            const forumBoxPosts = document.querySelector('#forum_box_posts');
+            const pageNavigation = document.querySelector('#page-navigation');
+            let totalPosts = 0; // سيتم تحديثه بعد جلب الإحصائيات
+
+            async function fetchStatistics() {
+                try {
+                    const response = await fetch('/api/v1/statistics');
+                    const data = await response.json();
+                    return data.totalPosts;
+                } catch (error) {
+                    console.error('Error fetching statistics:', error);
+                    return 0;
+                }
+            }
+
+            async function fetchPosts(page = 1, limit = 20) {
+                try {
+                    const response = await fetch(`/api/v1/posts?page=${page}&limit=${limit}`);
+                    const data = await response.json();
+                    return data.posts;
+                } catch (error) {
+                    console.error('Error fetching posts:', error);
+                    return [];
+                }
+            }
+
+            async function renderPosts(posts) {
+                forumBoxPosts.innerHTML = '';
+                if (posts.length === 0) {
+                    forumBoxPosts.innerHTML = '<li>There are no posts to display</li>';
+                    return;
+                }
+
+                const promises = posts.map(async (post) => {
+                    const [response_elapsed_time, response_statistics, response_users] = await Promise.all([
+                        fetch(`/api/v1/get-elapsed-time?created_at=${post.updated_at}&showOnly=false&lang=${lang}`),
+                        fetch(`/api/v1/statistics/${post.post_id}`),
+                        fetch(`/api/v1/users/${post.user_id}`)
+                    ]);
+                    const data_elapsed_time = await response_elapsed_time.json();
+                    const data_statistics = await response_statistics.json();
+                    const data_users = await response_users.json();
+                    const reports = data_statistics.reports || 0;
+                    const usersname = data_users.user.username;
+
+                    const postItem = document.createElement('li');
+                    postItem.innerHTML = `
+                        <p class="forum_replies_item">${reports}</p>
+                        <a href="/posts/${post.post_id}" class="forum_post_item">${post.post_title}</a>
+                        <p class="forum_author_item">${usersname}</p>
+                        <p class="forum_time_item">${data_elapsed_time.time ? data_elapsed_time.time : post.updated_at}</p>
+                    `;
+                    return postItem;
+                });
+
+                const renderedPosts = await Promise.all(promises);
+                renderedPosts.forEach((postItem) => {
+                    forumBoxPosts.appendChild(postItem);
+                });
+            }
+
+            function renderPagination(totalPosts, currentPage = 1, limit = 20) {
+                const totalPages = Math.ceil(totalPosts / limit);
+                pageNavigation.innerHTML = '';
+
+                const createPageLink = (page) => {
+                    const pageLink = document.createElement('li');
+                    pageLink.innerHTML = `<a href="#" data-page="${page}">${page}</a>`;
+                    return pageLink;
+                };
+
+                const addEllipsis = () => {
+                    const ellipsis = document.createElement('li');
+                    ellipsis.textContent = '...';
+                    pageNavigation.appendChild(ellipsis);
+                };
+
+                const addPageLink = (page) => {
+                    pageNavigation.appendChild(createPageLink(page));
+                };
+
+                const addFirstPageLink = () => {
+                    pageNavigation.appendChild(createPageLink(1));
+                };
+
+                const addLastPageLink = () => {
+                    pageNavigation.appendChild(createPageLink(totalPages));
+                };
+
+                // حساب بداية ونهاية أرقام الصفحات
+                let startPage = Math.max(1, currentPage - 1);
+                let endPage = Math.min(totalPages, currentPage + 1);
+
+                // ضمان عرض 3 صفحات إذا أمكن
+                if (endPage - startPage + 1 < 3) {
+                    if (startPage === 1) {
+                        endPage = Math.min(3, totalPages);
+                    } else if (endPage === totalPages) {
+                        startPage = Math.max(1, totalPages - 2);
+                    }
+                }
+
+                // توليد روابط الصفحات
+                for (let page = startPage; page <= endPage; page++) {
+                    addPageLink(page);
+                }
+
+                // إضافة علامة الحذف إذا لزم الأمر
+                if (endPage < totalPages - 1) {
+                    addEllipsis();
+                }
+
+                // رابط الصفحة الأخيرة
+                if (totalPages > 1) {
+                    addLastPageLink();
+                }
+            }
+
+            async function updateContent(page = 1, limit = 20) {
+                const posts = await fetchPosts(page, limit);
+                renderPosts(posts);
+                renderPagination(totalPosts, page, limit);
+            }
+
+            // إضافة مستمع للنقر على روابط التنقل
+            pageNavigation.addEventListener('click', function(event) {
+                if (event.target.tagName === 'A') {
+                    event.preventDefault();
+                    const page = parseInt(event.target.getAttribute('data-page'));
+                    updateContent(page);
+                }
+            });
+
+            // جلب الإحصائيات عند التحميل الأولي
+            (async function init() {
+                totalPosts = await fetchStatistics();
+                updateContent();
+            })();
+        });

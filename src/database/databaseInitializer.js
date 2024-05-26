@@ -12,7 +12,10 @@ import 'dotenv/config';
 import DatabaseManager from './DatabaseManager.js';
 import path from 'node:path';
 import fs from 'node:fs';
-import { logError, logInfo } from "../utils/logger.js";
+import {
+    logError,
+    logInfo
+} from "../utils/logger.js";
 import generateUniqueId from '../utils/generateUniqueId.js';
 import passwordHandler from '../utils/passwordHandler.js';
 
@@ -56,8 +59,18 @@ async function createUsersDatabase() {
         updated_at: usersDBManager.DataTypes.TEXT // تاريخ آخر تحديث للمعلومات.
     });
 
+    // جدول جلسات المستخدمين (sessions Table)
+    usersDBManager.createTable('sessions', {
+        session_id: usersDBManager.DataTypes.TEXT, // مُعرف فريد لكل جلسة.
+        data: usersDBManager.DataTypes.TEXT, // البيانات المخزنة للجلسة.
+        expires: usersDBManager.DataTypes.TEXT, // تاريخ انتهاء صلاحية الجلسة.
+    });
+
+
     // إنشاء مستخدم (admin) للوصول الكامل إلى جميع الميزات والوظائف.
-    const { hashedPassword } = await passwordHandler(process.env.ADMIN_PASSWORD, 'hash');
+    const {
+        hashedPassword
+    } = await passwordHandler(process.env.ADMIN_PASSWORD, 'hash');
     const currentTime = new Date().toISOString();
     usersDBManager.insertRecord("users", {
         user_id: generateUniqueId(35),
@@ -158,8 +171,6 @@ if (!fs.existsSync(postsDBPath)) {
 if (!fs.existsSync(reportsDBPath)) {
     logInfo(`Database created: ${reportsDBPath}`);
     createReportsDatabase();
-}
-
-else {
+} else {
     logInfo("لقد تم إنشاء قواعد البيانات وجداولها مسبقاً ✔️");
 }

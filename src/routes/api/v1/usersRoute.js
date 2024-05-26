@@ -161,14 +161,21 @@ export default async (router, config, logger, utils, DBManager) => {
         router.get('/users/:username', (req, res) => {
             try {
                 const { username } = req.params;
-                if (username && username.length > 25) {
-                    const message = translationManager.translate('username_too_long', { length: 25 }, lang);
+                if (username && username.length > 50) {
+                    const message = translationManager.translate('username_too_long', { length: 50 }, lang);
                     return res.status(422).json({
                         success: false,
                         message: message,
                     });
                 }
-                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                // البحث عن المستخدم بواسطة user_id
+                let user = usersDBManager.findRecord("users", { user_id: username });
+
+                // إذا لم يتم العثور، يبحث بواسطة username
+                if (!user) {
+                    user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                }
+
                 if (!user) {
                     const message = translationManager.translate('user_not_found', {}, lang);
                     return res.status(404).json({
@@ -196,8 +203,8 @@ export default async (router, config, logger, utils, DBManager) => {
                 const { headers, body, params } = req;
                 const { username } = params;
 
-                if (username && username.length > 25) {
-                    const message = translationManager.translate('username_too_long', { length: 25 }, lang);
+                if (username && username.length > 50) {
+                    const message = translationManager.translate('username_too_long', { length: 50 }, lang);
                     return res.status(422).json({
                         success: false,
                         message: message,
@@ -327,8 +334,8 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
                 const { headers, params } = req;
                 const { username } = params;
-                if (username && username.length > 25) {
-                    const message = translationManager.translate('username_too_long', { length: 25 }, lang);
+                if (username && username.length > 50) {
+                    const message = translationManager.translate('username_too_long', { length: 50 }, lang);
                     return res.status(422).json({
                         success: false,
                         message: message,

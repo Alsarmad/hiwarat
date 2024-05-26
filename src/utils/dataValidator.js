@@ -14,12 +14,12 @@ class DataValidator {
         const lang = config.defaultLang;
         this.validations = {
             username: {
-                maxLength: 25,
+                maxLength: 50,
                 minLength: 3,
                 pattern: /^[a-zA-Z0-9_]+$/,
                 // customValidation: (value) => (value.match(/[A-Z]/g) || []).length >= 2,
                 messages: {
-                    maxLength: translationManager.translate('username_maxLength', { length: 25 }, lang),
+                    maxLength: translationManager.translate('username_maxLength', { length: 50 }, lang),
                     minLength: translationManager.translate('username_minLength', { length: 3 }, lang),
                     pattern: translationManager.translate('username_pattern', {}, lang),
                     // customValidation: 'اسم المستخدم يجب أن يحتوي على حرفين كبيرين (Uppercase) على الأقل.'

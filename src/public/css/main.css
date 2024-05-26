@@ -1,0 +1,425 @@
+/*
+=======================
+# إعداد واستيراد الخطوط
+=======================
+*/
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Light.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Light.ttf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Regular.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Regular.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Dubai';
+    src: url('/fonts/DubaiW23-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+
+/*
+=======================
+# تعريف المتغيرات
+=======================
+*/
+
+/* تعريف المتغيرات للثيم الفاتح: */
+
+[data-theme="light"] {
+    --background: #eceff4;
+    --primary-color: #d4a373;
+    --secondary-color: #f5c27f;
+    --text-color: #2e3440;
+    --text-color-secondary: #4c566a;
+    --border-color: #d8dee9;
+    --button-background: #d4a373;
+    --button-hover-background: #c08b5f;
+    --button-text-color: #eceff4;
+    --link-color: #d4a373;
+    --link-hover-color: #c08b5f;
+
+    /* متغيرات الهيدر */
+    --header-background: #ffffff;
+    --header-border: #cdd1d4;
+    --header-text-color: #2e3440;
+    --header-link-color: #d4a373;
+    --header-link-hover-color: #c08b5f;
+
+    /* متغيرات الفوتر */
+    --footer-background: #2e3440;
+    --footer-primary-color: #21252d;
+    --footer-secondary-color: #3b4252;
+    --footer-border: #bec2c9;
+    --footer-text-color: #d8dee9;
+    --footer-link-color: #b08b5a;
+    --footer-link-hover-color: #d4a970;
+}
+
+
+/* تعريف المتغيرات للثيم الداكن: */
+
+[data-theme="dark"] {
+    --background: #2e3440;
+    --primary-color: #d4a373;
+    --secondary-color: #f5c27f;
+    --text-color: #eceff4;
+    --text-color-secondary: #d8dee9;
+    --border-color: #4c566a;
+    --button-background: #d4a373;
+    --button-hover-background: #c08b5f;
+    --button-text-color: #2e3440;
+    --link-color: #d4a373;
+    --link-hover-color: #c08b5f;
+
+    /* متغيرات الهيدر */
+    --header-background: #3b4252;
+    --header-border: #3a414a;
+    --header-text-color: #eceff4;
+    --header-link-color: #d4a373;
+    --header-link-hover-color: #c08b5f;
+
+    /* متغيرات الفوتر */
+    --footer-background: #434c5e;
+    --footer-primary-color: #343a47;
+    --footer-secondary-color: #3b4252;
+    --footer-border: #4f5965;
+    --footer-text-color: #d8dee9;
+    --footer-link-color: #f5c27f;
+    --footer-link-hover-color: #7e5b3f;
+}
+
+
+/*
+=======================
+# تنسيق الهيكل العام
+=======================
+*/
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Dubai', Arial, sans-serif;
+    font-weight: 300;
+    background-color: var(--background);
+    color: var(--text-color);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding-top: 60px;
+    /* ارتفاع الهيدر */
+}
+
+main {
+    flex: 1;
+    padding: 1em;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
+
+button {
+    display: block;
+    background-color: var(--button-background);
+    color: var(--button-text-color);
+    border: 1px solid var(--border-color);
+}
+
+button:hover {
+    background-color: var(--button-hover-background);
+}
+
+
+/*
+=======================
+# تنسيق الهيدر
+=======================
+*/
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 55px;
+    background-color: var(--header-background);
+    color: var(--header-text-color);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+    z-index: 1000;
+    border-bottom-color: var(--header-border);
+    border-bottom-width: 1px;
+    border-bottom-style: double;
+}
+
+#boxHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* direction: rtl; */
+    /* يتغير حسب اللغة */
+    margin-left: 10px;
+    margin-right: 10px;
+    padding: 5px;
+}
+
+#logo {
+    width: 100px;
+    height: 43px;
+    object-fit: cover;
+    user-select: none;
+}
+
+#boxHeader nav a {
+    color: var(--header-link-color);
+    text-decoration: none;
+    margin: 0 7px;
+    font-weight: 500;
+}
+
+#boxHeader nav a:hover {
+    color: var(--header-link-hover-color);
+}
+
+#header_nav_support_us {
+    background-color: var(--primary-color);
+    color: var(--text-color) !important;
+    padding: 3px;
+    font-size: 13px;
+    border-radius: 5px;
+}
+
+
+#header_nav_support_us:hover {
+    background-color: var(--secondary-color);
+}
+
+
+/*
+=======================
+# تنسيق الفوتر
+=======================
+*/
+footer {
+    text-align: center;
+}
+
+#footer-content>ul {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0;
+    list-style: none;
+    border-top-color: var(--footer-border);
+    border-top-width: 1px;
+    border-top-style: double;
+    padding-top: 10px;
+}
+
+#footer-content>ul>li {
+    margin: 5px 5px 5px 5px;
+    font-size: 13px;
+
+}
+
+#footer-content>ul>li>a {
+    color: var(--footer-link-color);
+}
+
+#footer-content>ul>li>a:hover {
+    color: var(--footer-link-hover-color);
+}
+
+
+/*
+=====================================================================
+# تنسيق باقي الصفحات
+=====================================================================
+*/
+
+#forum_box {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    border-color: var(--header-border);
+    border-width: 1px;
+    border-style: double;
+
+}
+
+#forum_box_title {
+    background-color: var(--header-background);
+    position: relative;
+    padding: 5px;
+    height: 40px;
+    color: var(--primary-color);
+    border-bottom-color: var(--header-border);
+    border-bottom-width: 1px;
+    border-bottom-style: double;
+}
+
+#forum_box_title h1 {
+    margin: 0 0 0 0;
+}
+
+#page-navigation {
+    display: flex;
+    flex-wrap: nowrap;
+    padding: 0;
+    list-style: none;
+    position: absolute;
+    /* left: 0px; */
+    top: -5px;
+}
+
+#page-navigation li {
+    margin-left: 5px;
+    margin-right: 5px;
+    background-color: var(--background);
+    text-align: center;
+    padding-left: 5px;
+    padding-right: 5px;
+    color: var(--link-color);
+}
+
+#page-navigation li a {
+    font-weight: 700;
+}
+
+#page-navigation li:hover {
+    background-color: var(--primary-color) !important;
+}
+
+#page-navigation li:hover a {
+    color: var(--text-color) !important;
+}
+
+#forum_navigation_ellipsis:hover {
+    color: var(--text-color) !important;
+}
+
+#forum_first_page {
+    background-color: var(--primary-color) !important;
+
+}
+
+#forum_first_page a {
+    color: var(--text-color) !important;
+}
+
+#forum_box_posts {
+    padding: 0px;
+    margin: 0;
+}
+
+#forum_box_posts li {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    text-align: justify;
+    padding: 7px;
+    border-bottom-color: var(--header-border);
+    border-bottom-width: 1px;
+    border-bottom-style: double;
+}
+
+#forum_box_posts li:last-child {
+    border-bottom: none;
+}
+
+#forum_box_posts li p,
+#forum_box_posts li a {
+    margin: 0;
+    text-align: justify !important;
+    /* background-color: #b08b5a; */
+    margin-left: 5px;
+    margin-right: 5px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.forum_post_item {
+    flex: 1;
+    font-weight: 500;
+}
+
+.forum_replies_item,
+.forum_author_item,
+.forum_time_item {
+    color: var(--text-color-secondary);
+}
+
+.forum_time_item {
+    font-size: 11px;
+}
+.forum_author_item {
+    font-size: 11px;
+    font-weight: 700;
+}
+
+@media (max-width: 450px) {
+    #boxHeader nav a {
+        font-size: 13px;
+        font-weight: 300;
+    }
+}
+
+@media (max-width: 320px) {
+
+    #header_nav_home,
+    #header_nav_contact_us {
+        display: none;
+    }
+}

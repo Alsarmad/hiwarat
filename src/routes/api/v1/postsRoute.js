@@ -1,4 +1,4 @@
-import * as marked from 'marked';
+import { marked } from 'marked';
 import { convert } from 'html-to-text';
 
 export default async (router, config, logger, utils, DBManager) => {
@@ -198,13 +198,14 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 // التحقق من وجود سجل للمشاهدات في الجلسة
-                if (!req.session.views) {
-                    req.session.views = {};
+                if (!req.cookies.views) {
+                    res.cookie('views', {}, { httpOnly: true });
                 }
 
                 // التحقق مما إذا كان المنشور قد تمت مشاهدته في هذه الجلسة
-                if (!req.session.views[post_id]) {
-                    req.session.views[post_id] = true;
+                if (!req.cookies.views[post_id]) {
+                    req.cookies.views[post_id] = true;
+                    res.cookie('views', req.cookies.views, { httpOnly: true });
 
                     // زيادة عدد المشاهدات في قاعدة البيانات
                     postsDBManager.incrementViewCount(post_id);

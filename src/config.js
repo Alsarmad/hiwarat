@@ -1,10 +1,16 @@
 import path from "node:path";
+import fs from "node:fs";
 
 const root = path.resolve(process.cwd()); // project root directory (./)
 const port = process.env.PORT || 3000;
 const domain = `http://127.0.0.1:${port}`; // remove process.env.PORT in production
+const packageRead = fs.readFileSync(path.join(root, "package.json"));
+const packageJson = JSON.parse(packageRead);
 
 export const config = {
+
+    // الإصدار
+    version: packageJson.version,
 
     /* Server */
     port: port,
@@ -20,18 +26,6 @@ export const config = {
     /* Config Website */
     website_name: process.env.WEBSITE_NAME,
 
-    /* Session */
-    session: {
-        secret: process.env.SESSION_SECRET, // يجب أن تكون هذه القيمة سرية وطويلة ومعقدة
-        resave: false, // لا تحفظ الجلسات إذا لم يكن هناك تغييرات
-        saveUninitialized: true, // حفظ الجلسات الجديدة حتى لو لم تكن هناك بيانات
-        cookie: {
-            maxAge: 24 * 60 * 60 * 1000,// صلاحية الجلسة لمدة 24 ساعة
-            path: '/', // المسار الافتراضي لملف تعريف الارتباط
-            httpOnly: true, // يجعل ملف تعريف الارتباط غير قابل للوصول بواسطة JavaScript في المتصفح
-            secure: false // ملف تعريف الارتباط لن يُرسل إلا عبر اتصالات HTTPS إذا تم تعيينه على true
-        }
-    },
     /* Helmet */
     helmet: {
         contentSecurityPolicy: {
@@ -80,6 +74,7 @@ export const config = {
     paths: {
         root: root,
         logs: path.join(root, "src", "logs"),
+        views: path.join(root, "src", "views"),
         public: path.join(root, "src", "public"),
         favicon: path.join(root, "src", "public", "favicon.ico"),
         database: path.join(root, "src", "database")

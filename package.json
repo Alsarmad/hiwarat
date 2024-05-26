@@ -12,7 +12,9 @@
     },
     "nodemonConfig": {
         "ignore": [
-            "src/public"
+            "src/translations",
+            "src/public",
+            "src/logs"
         ]
     },
     "author": {
@@ -47,15 +49,17 @@
         "canvas": "^2.11.2",
         "captcha-ge": "^1.0.9",
         "compression": "^1.7.4",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.18.3",
         "express-rate-limit": "^7.2.0",
-        "express-session": "^1.18.0",
         "fs-extra": "^11.2.0",
         "helmet": "^7.1.0",
         "html-to-text": "^9.0.5",
         "marked": "^12.0.2",
         "node-fetch": "^3.3.2",
+        "pug": "^3.0.2",
         "serve-favicon": "^2.5.0"
     },
     "devDependencies": {

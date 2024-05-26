@@ -1,5 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import { config } from "../config.js";
+
 
 const root = path.resolve(process.cwd()); // project root directory (./)
 
@@ -78,4 +80,5 @@ class TranslationManager {
     }
 }
 
-export default TranslationManager;
+const translationManager = new TranslationManager(config.defaultLang);
+export default translationManager;
