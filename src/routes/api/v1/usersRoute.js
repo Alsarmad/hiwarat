@@ -217,8 +217,13 @@ export default async (router, config, logger, utils, DBManager) => {
                     return res.status(401).json(authResult);
                 }
 
-                // التحقق من وجود العضو params.username
-                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                // البحث عن المستخدم بواسطة user_id
+                let user = usersDBManager.findRecord("users", { user_id: username });
+
+                // إذا لم يتم العثور، يبحث بواسطة username
+                if (!user) {
+                    user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                }
                 if (!user) {
                     const message = translationManager.translate('user_not_found', {}, lang);
                     return res.status(404).json({
@@ -341,7 +346,13 @@ export default async (router, config, logger, utils, DBManager) => {
                         message: message,
                     });
                 }
-                const user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                // البحث عن المستخدم بواسطة user_id
+                let user = usersDBManager.findRecord("users", { user_id: username });
+
+                // إذا لم يتم العثور، يبحث بواسطة username
+                if (!user) {
+                    user = usersDBManager.findRecord("users", { username: username.toLowerCase() });
+                }
                 if (!user) {
                     const message = translationManager.translate('user_not_found', {}, lang);
                     return res.status(404).json({

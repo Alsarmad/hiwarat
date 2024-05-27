@@ -177,10 +177,17 @@ button {
     background-color: var(--button-background);
     color: var(--button-text-color);
     border: 1px solid var(--border-color);
+    font-family: 'Dubai', Arial, sans-serif;
 }
 
 button:hover {
     background-color: var(--button-hover-background);
+}
+
+ol,
+ul {
+    padding: 0px;
+    list-style: none;
 }
 
 
@@ -260,8 +267,6 @@ footer {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 0;
-    list-style: none;
     border-top-color: var(--footer-border);
     border-top-width: 1px;
     border-top-style: double;
@@ -282,6 +287,70 @@ footer {
     color: var(--footer-link-hover-color);
 }
 
+/*
+=======================
+# تنسيق تتبع التنقل breadcrumb
+=======================
+*/
+
+#breadcrumb {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: var(--header-background);
+    border-color: var(--header-border);
+    border-width: 1px;
+    border-style: double;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#breadcrumb_box {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#breadcrumb_box>ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    /* white-space: nowrap; */
+    text-overflow: ellipsis;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+#breadcrumb_box>ol>li {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#breadcrumb_box .breadcrumb-item+.breadcrumb-item::before {
+    content: '›';
+    margin: 0 5px;
+    color: var(--text-color);
+}
+
+#box_login {
+    
+    max-width: 200px;
+    padding: 5px;
+    /* padding-right: 10px; */
+}
+
+#but_login {
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    margin: auto;
+}
 
 /*
 =====================================================================
@@ -317,8 +386,6 @@ footer {
 #page-navigation {
     display: flex;
     flex-wrap: nowrap;
-    padding: 0;
-    list-style: none;
     position: absolute;
     /* left: 0px; */
     top: -5px;
@@ -352,7 +419,6 @@ footer {
 
 #forum_first_page {
     background-color: var(--primary-color) !important;
-
 }
 
 #forum_first_page a {
@@ -404,9 +470,84 @@ footer {
 .forum_time_item {
     font-size: 11px;
 }
+
 .forum_author_item {
     font-size: 11px;
     font-weight: 700;
+}
+
+
+/*
+=======================
+# تنسيق صفحة تسجيل الدخول
+=======================
+*/
+
+.login-container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 95%;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.login-container p {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-container div a {
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.login-container input {
+    display: block;
+    width: 90%;
+    height: 30px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--button-background);
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.login-container button:hover {
+    background-color: var(--button-hover-background);
+}
+
+#box_login_username {
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#login_error {
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: 400;
+    color: #d94040;
 }
 
 @media (max-width: 450px) {

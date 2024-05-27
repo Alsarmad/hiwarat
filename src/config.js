@@ -25,6 +25,7 @@ export const config = {
 
     /* Config Website */
     website_name: process.env.WEBSITE_NAME,
+    website_description: process.env.WEBSITE_DESCRIPTION,
 
     /* Helmet */
     helmet: {

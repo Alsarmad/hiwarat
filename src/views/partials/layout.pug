@@ -7,6 +7,8 @@
 - var privacy = translationManager.translate('privacy', {}, lang)
 - var forgot_password = translationManager.translate('forgot_password', {}, lang)
 - var top_page = translationManager.translate('top_page', {}, lang)
+- let sign_in = translationManager.translate('sign_in', {}, lang)
+
 
 doctype html
 html(lang="ar" data-theme="light")
@@ -29,7 +31,7 @@ html(lang="ar" data-theme="light")
         header#header
             include ./header.pug
         main
-            #breadcrumb
+            #breadcrumb(dir=dir)
                 include ./breadcrumb.pug
             #content 
                 block content
@@ -41,10 +43,18 @@ html(lang="ar" data-theme="light")
             include ./footer.pug
         block script
         script(type="module").
+            let session = !{JSON.stringify(session)};
             const footer_top_page = document.getElementById("footer_top_page");
+            const but_login = document.getElementById("but_login");
             if (footer_top_page) {
                 footer_top_page.addEventListener('click', function(event) {
                     event.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            if (but_login) {
+                but_login.addEventListener('click', function(event) {
+                    window.location.pathname= !session ? "/login" : "/logout"
                 });
             }

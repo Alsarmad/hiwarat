@@ -58,15 +58,15 @@ block script
                     const data_elapsed_time = await response_elapsed_time.json();
                     const data_statistics = await response_statistics.json();
                     const data_users = await response_users.json();
-                    const reports = data_statistics.reports || 0;
+                    const comments = data_statistics.comments;
                     const usersname = data_users.user.username;
 
                     const postItem = document.createElement('li');
                     postItem.innerHTML = `
-                        <p class="forum_replies_item">${reports}</p>
-                        <a href="/posts/${post.post_id}" class="forum_post_item">${post.post_title}</a>
-                        <p class="forum_author_item">${usersname}</p>
-                        <p class="forum_time_item">${data_elapsed_time.time ? data_elapsed_time.time : post.updated_at}</p>
+                        <p class="forum_replies_item" title="${comments}" aria-label="${comments}">${comments}</p>
+                        <a href="/posts/${post.post_id}" class="forum_post_item" title="${post.post_title}" aria-label=="${post.post_title}">${post.post_title}</a>
+                        <p class="forum_author_item" title="${usersname}" aria-label=="${usersname}">${usersname}</p>
+                        <p class="forum_time_item" title="${data_elapsed_time.time}" aria-label=="${data_elapsed_time.time}">${data_elapsed_time.time ? data_elapsed_time.time : post.updated_at}</p>
                     `;
                     return postItem;
                 });

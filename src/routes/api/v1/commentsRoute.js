@@ -1,4 +1,4 @@
-import * as marked from 'marked';
+import { marked } from 'marked';
 import { convert } from 'html-to-text';
 
 export default async (router, config, logger, utils, DBManager) => {
@@ -240,7 +240,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     post_id: comment.post_id,
                     user_id: comment.user_id,
                     comment_content: htmlContent,
-                    comment_content_raw:plainTextContent,
+                    comment_content_raw: plainTextContent,
                     created_at: comment.created_at,
                     updated_at: new Date().toISOString()
                 };

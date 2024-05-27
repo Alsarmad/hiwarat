@@ -2,6 +2,7 @@ export default function variablesMiddleware(config) {
     return function (req, res, next) {
         try {
             res.locals.website_name = config.website_name;
+            res.locals.website_description = config.website_description;
             res.locals.defaultLang = config.DEFAULTLANG;
             res.locals.version = config.version;
             res.locals.port = config.port;

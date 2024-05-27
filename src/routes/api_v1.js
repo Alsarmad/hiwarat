@@ -21,7 +21,7 @@ export default (DBManager, translationManager) => {
     const router = Router();
     const logger = { logError, logInfo };
     const dataValidator = new DataValidator(config, translationManager);
-    const Helpers = apiHelpers(DBManager);
+    const Helpers = apiHelpers(DBManager, translationManager, config);
     const utils = {
         rateLimit,
         getMissingFields: Helpers.getMissingFields,

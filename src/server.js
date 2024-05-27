@@ -76,41 +76,6 @@ import authenticateSession from './utils/middleware/authenticateSession.js';
 const sessionManager = new SessionManager(usersDBManager);
 app.use(authenticateSession(sessionManager));
 
-// LOGIN PAGE
-app.get('/loginKK', (req, res) => {
-  const {
-    username,
-    password
-  } = req.query;
-
-  const session = req.session;
-
-  if (session) {
-    return res.status(200).json({
-      message: 'You are logged in successfully.',
-      session: session
-    });
-  }
-
-  // تحقق من بيانات المستخدم (هذه مجرد مثال، يجب أن تتحقق من قاعدة بيانات المستخدمين)
-  if (username === 'user' && password === 'pass') {
-    const userId = 1; // معرف المستخدم بعد التحقق
-    const sessionId = sessionManager.createSession({
-      userId
-    });
-    res.cookie('sessionId', sessionId, {
-      httpOnly: true
-    });
-    res.status(200).json({
-      message: 'Logged in successfully'
-    });
-  } else {
-    res.status(401).json({
-      message: 'Invalid credentials'
-    });
-  }
-});
-
 // DASHBOARD PAGE
 app.get('/dashboard', (req, res) => {
   const session = req.session;
@@ -127,23 +92,6 @@ app.get('/dashboard', (req, res) => {
   }
 });
 
-// LOGOUT PAGE
-app.get('/logout', (req, res) => {
-  const session = req.session;
-  if (!session) {
-    const sessionId = req.cookies.sessionId;
-    sessionManager.destroySession(sessionId);
-    res.clearCookie('sessionId');
-    return res.status(200).json({
-      message: 'Logged out successfully'
-    });
-  } else {
-    return res.status(200).json({
-      message: 'No session to log out from'
-    });
-  }
-});
-
 
 /* API VERSION 1.0 ROUTES */
 import APIv1Router from "./routes/api_v1.js";
@@ -151,7 +99,7 @@ app.use("/api/v1", APIv1Router(DBManager, translationManager));
 
 /* FORUM (Hiwarat) ROUTES */
 import forum from "./routes/forum.js";
-app.use("/", forum(DBManager, translationManager));
+app.use("/", forum(DBManager, translationManager, sessionManager));
 
 /* INTERNAL SERVER ERROR */
 app.use((err, req, res, next) => {

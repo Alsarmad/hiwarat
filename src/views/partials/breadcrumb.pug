@@ -1,0 +1,18 @@
+- let box_login_style = dir === "rtl" ? "border-right-color: var(--header-border);border-right-width: 1px;border-right-style: double;" : "border-left-color: var(--header-border);border-left-width: 1px;border-left-style: double;" 
+- let sign_out = translationManager.translate('sign_out', {}, lang)
+//- مسار التنقل
+nav(aria-label='breadcrumb')#breadcrumb_box
+    ol
+        li.breadcrumb-item
+            a(href='/' title=website_name aria-label=website_name)=website_name
+        li.breadcrumb-item
+            a(href='/login') تجريبي
+        li.breadcrumb-item الدخول تسجيل الدخول تسجيل الدخول تسجيل الدخول تسجيل الدخول تسجيل الدخول تسجيل الدخول تسجيل الدخول تسجيل
+
+//- نموذج تسجيل الدخول
+#box_login(style=box_login_style)
+    if !session
+        button#but_login=sign_in
+    else 
+        p#box_login_username=session.username ? session.username : "user"
+        button#but_login=sign_out

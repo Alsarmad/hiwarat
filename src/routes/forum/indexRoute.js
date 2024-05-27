@@ -8,7 +8,7 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
 
                 const options = {
-                    getElapsedTime: getElapsedTime
+                    getElapsedTime: getElapsedTime,
                 };
                 return res.status(200).render("forum", options);
 

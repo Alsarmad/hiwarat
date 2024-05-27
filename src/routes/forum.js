@@ -2,16 +2,20 @@ import { Router } from 'express';
 import { config } from "../config.js";
 import { logError, logInfo } from "../utils/logger.js";
 import getElapsedTime from "../utils/getElapsedTime.js";
+import apiHelpers from '../utils/apiHelpers.js';
 import indexRoute from './forum/indexRoute.js';
 import loginRoute from './forum/loginRoute.js';
 import registerRoute from './forum/registerRoute.js';
 
-export default (DBManager, translationManager) => {
+export default (DBManager, translationManager, sessionManager) => {
     const router = Router();
     const logger = { logError, logInfo };
+    const Helpers = apiHelpers(DBManager, translationManager, config);
     const utils = {
         translationManager,
-        getElapsedTime
+        getElapsedTime,
+        checkUserAuthentication: Helpers.checkUserAuthentication,
+        sessionManager
     }
 
     /* INDEX (HOME PAGE) ROUTER */

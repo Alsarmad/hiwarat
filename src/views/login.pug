@@ -1,0 +1,71 @@
+extends ./partials/layout.pug
+
+block stylesheet
+    style.
+        #breadcrumb {
+            display: none;
+        }
+
+block content
+    - let username = translationManager.translate('username', {}, lang)
+    - let password = translationManager.translate('password', {}, lang)
+    .login-container(dir=dir)
+        h2=sign_in
+        #login_box_input
+            p=username
+            input(type="text" name="username")#login_input_username
+            p=password
+            input(type="password" name="password")#login_input_password
+            a(href="/forgot_password" title=forgot_password aria-label=forgot_password)=forgot_password
+            p#login_error
+            button#bt_sign_in=sign_in
+
+block script
+    script(type="module").
+        const login_input_username = document.getElementById('login_input_username');
+        const login_input_password = document.getElementById('login_input_password');
+        const login_error = document.getElementById('login_error');
+        const bt_sign_in = document.getElementById('bt_sign_in');
+
+        bt_sign_in.addEventListener('click', async function(event) {
+            try {
+                console.log({ username: login_input_username?.value, password: login_input_password?.value })
+                const islogin = await fetchJson('/login', {
+                    method: 'POST',
+                    body: { username: login_input_username?.value, password: login_input_password?.value }
+                });
+
+                if (!islogin?.success) {
+                    login_error.innerText = islogin.message;
+                } else {
+                    window.location.pathname = "/";
+                }
+            } catch (error) {
+                login_error.innerText = 'Error logging in. Please try again.';
+                console.error('Error:', error);
+            }
+        });
+
+        async function fetchJson(path, options = {}) {
+            const { method = 'GET', body = null } = options;
+            try {
+                const response = await fetch(path, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                //- if (!response.ok) {
+                //-     throw new Error(`HTTP error! status: ${response.status}`);
+                //- }
+
+                const data = await response?.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return { success: false };
+            }
+        }
