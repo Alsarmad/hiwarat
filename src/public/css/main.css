@@ -604,10 +604,11 @@ footer {
 }
 
 #box_create_post_bt_create {
+    display: block;
     margin-top: 20px;
     width: 100%;
     padding: 10px;
-    background-color: var(--text-color-white);
+    color: var(--text-color-white);
     border: none;
     border-radius: 4px;
     font-size: 16px;
@@ -671,6 +672,11 @@ footer {
 #post_content {
     padding: 5px;
     background-color: var(--header-background);
+}
+
+#post_content {
+    box-sizing: border-box;
+    word-break: break-all;
 }
 
 
