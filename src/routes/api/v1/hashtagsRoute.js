@@ -17,14 +17,17 @@ export default async (router, config, logger, utils, DBManager) => {
 
         const { postsDBManager } = DBManager;
         const MAX_HASHTAGS_PER_PAGE = 20;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
 
         // الحصول على كل الهاشتاجات بدون تكرارات
         router.get('/hashtags', (req, res) => {
             try {
-                const lang = config.defaultLang;
-                const { page = 1, limit = 20 } = req.query;
+                const { query } = req
+                const { page = 1, limit = 20 } = query;
 
+                if (query?.lang) {
+                    lang = query?.lang
+                }
                 // التحقق من الحد الأقصى لعدد الهاشتاجات في كل صفحة
                 if (parseInt(limit) > MAX_HASHTAGS_PER_PAGE) {
                     const message = translationManager.translate('max_hashtags_per_page_exceeded', { max_hashtags_per_page: MAX_HASHTAGS_PER_PAGE }, lang);
@@ -61,9 +64,13 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على هاشتاج بواسطة اسم الهاشتاق hashtag_text مع دعم الفلترة والترتيب
         router.get('/hashtags/:hashtag_text', (req, res) => {
             try {
-                const { hashtag_text } = req.params;
-                const { page = 1, limit = 20 } = req.query;
-                const lang = config.defaultLang;
+                const { params, query } = req;
+                const { hashtag_text } = params;
+                const { page = 1, limit = 20 } = query;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 const pageNum = parseInt(page);
                 const limitNum = Math.min(parseInt(limit), MAX_HASHTAGS_PER_PAGE);
@@ -102,8 +109,12 @@ export default async (router, config, logger, utils, DBManager) => {
         // حذف هاشتاج بواسطة نص الهاشتاج
         router.delete('/hashtags/:hashtag_text', async (req, res) => {
             try {
-                const { headers, params } = req;
+                const { headers, params, query } = req;
                 const { hashtag_text } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (hashtag_text && hashtag_text.length > 50) {
                     const message = translationManager.translate('hashtag_id_too_long', { length: 50 }, lang);
@@ -113,7 +124,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }

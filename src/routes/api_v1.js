@@ -2,7 +2,7 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { config } from "../config.js";
 import { logError, logInfo } from "../utils/logger.js";
-import DataValidator from "../utils/dataValidator.js";
+import dataValidator from "../utils/dataValidator.js";
 import getElapsedTime from "../utils/getElapsedTime.js";
 import generateUniqueId from '../utils/generateUniqueId.js';
 import apiHelpers from '../utils/apiHelpers.js';
@@ -20,7 +20,6 @@ import utilsRoute from "./api/v1/utilsRoute.js";
 export default (DBManager, translationManager) => {
     const router = Router();
     const logger = { logError, logInfo };
-    const dataValidator = new DataValidator(config, translationManager);
     const Helpers = apiHelpers(DBManager, translationManager, config);
     const utils = {
         rateLimit,

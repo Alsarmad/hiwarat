@@ -16,8 +16,8 @@ import translationManager from "./utils/translationManager.js";
 import translationMiddleware from "./utils/middleware/translationMiddleware.js";
 app.use(translationMiddleware(translationManager, config.defaultLang));
 
-import helmet from "helmet";
-app.use(helmet(config.helmet));
+// import helmet from "helmet";
+// app.use(helmet(config.helmet));
 
 import cors from "cors";
 // تمكين CORS لجميع الطلبات

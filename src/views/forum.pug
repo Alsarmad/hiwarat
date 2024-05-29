@@ -1,9 +1,14 @@
 extends ./partials/layout.pug
 
 block content
+    - let new_post = translationManager.translate('new_post', {}, lang)
+    - let posts = translationManager.translate('posts', {}, lang)
+    if session
+        #forum_box_new_pos
+            button(title=new_post aria-label=new_post style=`${dir === "rtl" ? "margin-left: auto;" : "margin-right: auto;"}`)#bt_new_post=new_post
     section#forum_box(dir=dir)
         div#forum_box_title
-            h1 المنشورات
+            h1=posts
             nav
                 ol#page-navigation(style=`${dir === "rtl" ? "left: 0px;" : "right: 0px;"}`)
                     //- روابط التنقل بين الصفحات سيتم توليدها ديناميكيًا بواسطة JavaScript
@@ -16,13 +21,19 @@ block script
         let varDir = !{JSON.stringify(dir)};
         let lang = !{JSON.stringify(lang)};
         document.addEventListener('DOMContentLoaded', function() {
+            const bt_new_post = document.getElementById('bt_new_post');
+            if (bt_new_post) {
+                bt_new_post.addEventListener('click',() => {
+                    window.location.pathname = "/create-post";
+                });
+            }
             const forumBoxPosts = document.querySelector('#forum_box_posts');
             const pageNavigation = document.querySelector('#page-navigation');
             let totalPosts = 0; // سيتم تحديثه بعد جلب الإحصائيات
 
             async function fetchStatistics() {
                 try {
-                    const response = await fetch('/api/v1/statistics');
+                    const response = await fetch(`/api/v1/statistics?lang=${lang}`);
                     const data = await response.json();
                     return data.totalPosts;
                 } catch (error) {
@@ -33,7 +44,7 @@ block script
 
             async function fetchPosts(page = 1, limit = 20) {
                 try {
-                    const response = await fetch(`/api/v1/posts?page=${page}&limit=${limit}`);
+                    const response = await fetch(`/api/v1/posts?page=${page}&limit=${limit}&lang=${lang}`);
                     const data = await response.json();
                     return data.posts;
                 } catch (error) {
@@ -52,8 +63,8 @@ block script
                 const promises = posts.map(async (post) => {
                     const [response_elapsed_time, response_statistics, response_users] = await Promise.all([
                         fetch(`/api/v1/get-elapsed-time?created_at=${post.updated_at}&showOnly=false&lang=${lang}`),
-                        fetch(`/api/v1/statistics/${post.post_id}`),
-                        fetch(`/api/v1/users/${post.user_id}`)
+                        fetch(`/api/v1/statistics/${post.post_id}?lang=${lang}`),
+                        fetch(`/api/v1/users/${post.user_id}?lang=${lang}`)
                     ]);
                     const data_elapsed_time = await response_elapsed_time.json();
                     const data_statistics = await response_statistics.json();
@@ -62,11 +73,12 @@ block script
                     const usersname = data_users.user.username;
 
                     const postItem = document.createElement('li');
+                    let textAlign = lang === "ar" ? `text-align: right !important;`: `text-align: left !important;`;
                     postItem.innerHTML = `
-                        <p class="forum_replies_item" title="${comments}" aria-label="${comments}">${comments}</p>
-                        <a href="/posts/${post.post_id}" class="forum_post_item" title="${post.post_title}" aria-label=="${post.post_title}">${post.post_title}</a>
-                        <p class="forum_author_item" title="${usersname}" aria-label=="${usersname}">${usersname}</p>
-                        <p class="forum_time_item" title="${data_elapsed_time.time}" aria-label=="${data_elapsed_time.time}">${data_elapsed_time.time ? data_elapsed_time.time : post.updated_at}</p>
+                        <p class="forum_replies_item" title="${comments}" aria-label="${comments}" style="${textAlign}">${comments}</p>
+                        <a href="/posts/${post.post_id}" class="forum_post_item" title="${post.post_title}" aria-label=="${post.post_title}" style="${textAlign}">${post.post_title}</a>
+                        <p class="forum_author_item" title="${usersname}" aria-label=="${usersname}" style="${textAlign}">${usersname}</p>
+                        <p class="forum_time_item" title="${data_elapsed_time.time}" aria-label=="${data_elapsed_time.time}" style="${textAlign}">${data_elapsed_time.time ? data_elapsed_time.time : post.updated_at}</p>
                     `;
                     return postItem;
                 });

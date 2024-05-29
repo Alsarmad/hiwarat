@@ -6,6 +6,7 @@ import apiHelpers from '../utils/apiHelpers.js';
 import indexRoute from './forum/indexRoute.js';
 import loginRoute from './forum/loginRoute.js';
 import registerRoute from './forum/registerRoute.js';
+import postsRoute from './forum/postsRoute.js';
 
 export default (DBManager, translationManager, sessionManager) => {
     const router = Router();
@@ -15,6 +16,7 @@ export default (DBManager, translationManager, sessionManager) => {
         translationManager,
         getElapsedTime,
         checkUserAuthentication: Helpers.checkUserAuthentication,
+        tryParseJSON: Helpers.tryParseJSON,
         sessionManager
     }
 
@@ -26,6 +28,9 @@ export default (DBManager, translationManager, sessionManager) => {
 
     /* REGISTER ROUTER */
     registerRoute(router, config, logger, utils, DBManager);
+
+    /* POSTS ROUTER */
+    postsRoute(router, config, logger, utils, DBManager);
 
     return router;
 }

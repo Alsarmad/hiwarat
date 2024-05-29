@@ -12,7 +12,7 @@ export default async (router, config, logger, utils, DBManager) => {
             dataValidator
         } = utils;
         const { postsDBManager, reportsDBManager } = DBManager;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
         const MAX_REPORTS_PER_PAGE = 20;
 
         // إعداد المحدد للطلبات مع رسالة مخصصة
@@ -20,6 +20,12 @@ export default async (router, config, logger, utils, DBManager) => {
             windowMs: 24 * 60 * 60 * 1000, // 24 ساعة
             max: 20, // الحد الأقصى لعدد الطلبات لكل IP خلال نافذة الوقت المحددة
             handler: (req, res) => {
+                const { query } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
                 const message = translationManager.translate('report_rate_limit_exceeded', {}, lang);
                 res.status(429).json({
                     success: false,
@@ -34,6 +40,11 @@ export default async (router, config, logger, utils, DBManager) => {
             try {
 
                 const { query } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
                 const page = parseInt(query.page) || 1;
                 let limit = parseInt(query.limit) || MAX_REPORTS_PER_PAGE;
                 limit = Math.min(limit, MAX_REPORTS_PER_PAGE);
@@ -69,8 +80,13 @@ export default async (router, config, logger, utils, DBManager) => {
         // إنشاء بلاغ جديد
         router.post('/create-reports', createReportLimiter, async (req, res) => {
             try {
-                const { body, headers } = req;
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const { query, body, headers } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }
@@ -86,11 +102,11 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 const missingFields = getMissingFields(body, ["reported_item_type", "reported_item_id", "report_type", "report_description"]);
                 if (missingFields.length > 0) {
-                    return sendMissingFieldsResponse(res, missingFields);
+                    return sendMissingFieldsResponse(res, missingFields, lang);
                 }
 
                 // التحقق من البيانات المدخلة
-                const validation = dataValidator.validate(body);
+                const validation = dataValidator(body, translationManager, lang);
                 if (!validation.success) {
                     return res.status(400).json({
                         success: false,
@@ -153,7 +169,13 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على بلاغ بواسطة المعرف
         router.get('/reports/:report_id', async (req, res) => {
             try {
-                const { report_id } = req.params;
+
+                const { query, params } = req;
+                const { report_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (report_id && report_id.length > 50) {
                     const message = translationManager.translate('report_id_too_long', { length: 50 }, lang);
@@ -187,7 +209,13 @@ export default async (router, config, logger, utils, DBManager) => {
         // حذف بلاغ بواسطة المعرف
         router.delete('/reports/:report_id', async (req, res) => {
             try {
-                const { report_id } = req.params;
+
+                const { query, params, headers } = req;
+                const { report_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (report_id && report_id.length > 50) {
                     const message = translationManager.translate('report_id_too_long', { length: 50 }, lang);
@@ -197,7 +225,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }

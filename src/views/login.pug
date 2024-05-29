@@ -18,10 +18,11 @@ block content
             input(type="password" name="password")#login_input_password
             a(href="/forgot_password" title=forgot_password aria-label=forgot_password)=forgot_password
             p#login_error
-            button#bt_sign_in=sign_in
+            button#bt_sign_in(title=sign_in aria-label=sign_in)=sign_in
 
 block script
     script(type="module").
+        let lang = !{JSON.stringify(lang)};
         const login_input_username = document.getElementById('login_input_username');
         const login_input_password = document.getElementById('login_input_password');
         const login_error = document.getElementById('login_error');
@@ -30,7 +31,7 @@ block script
         bt_sign_in.addEventListener('click', async function(event) {
             try {
                 console.log({ username: login_input_username?.value, password: login_input_password?.value })
-                const islogin = await fetchJson('/login', {
+                const islogin = await fetchJson(`/login?lang=${lang}`, {
                     method: 'POST',
                     body: { username: login_input_username?.value, password: login_input_password?.value }
                 });

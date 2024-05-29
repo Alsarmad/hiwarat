@@ -13,14 +13,19 @@ export default async (router, config, logger, utils, DBManager) => {
             dataValidator
         } = utils;
         const { postsDBManager } = DBManager;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
 
         // إنشاء إعجاب جديد
         router.post('/create-likes', async (req, res) => {
             try {
 
-                const { body, headers } = req;
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const { body, headers, query } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }
@@ -36,11 +41,11 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 const missingFields = getMissingFields(body, ["post_id"]);
                 if (missingFields.length > 0) {
-                    return sendMissingFieldsResponse(res, missingFields);
+                    return sendMissingFieldsResponse(res, missingFields, lang);
                 }
 
                 // التحقق من البيانات المدخلة
-                const validation = dataValidator.validate(body);
+                const validation = dataValidator(body, translationManager, lang);
                 if (!validation.success) {
                     return res.status(400).json({
                         success: false,
@@ -86,7 +91,13 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على إعجاب بواسطة المعرف
         router.get('/likes/:like_id', async (req, res) => {
             try {
-                const { like_id } = req.params;
+                const { query, params } = req;
+                const { like_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
                 if (like_id && like_id.length > 50) {
                     const message = translationManager.translate('like_id_too_long', { length: 50 }, lang);
                     return res.status(422).json({
@@ -118,7 +129,12 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على إعجاب بواسطة معرف المنشور
         router.get('/likes/:post_id', async (req, res) => {
             try {
-                const { post_id } = req.params;
+                const { query, params } = req;
+                const { post_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (post_id && post_id.length > 50) {
                     const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
@@ -164,10 +180,14 @@ export default async (router, config, logger, utils, DBManager) => {
         router.delete('/likes/:like_id', async (req, res) => {
             try {
 
-                const { headers, params } = req;
+                const { query, params, headers } = req;
                 const { like_id } = params;
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }

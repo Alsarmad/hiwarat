@@ -524,7 +524,7 @@ export default class DatabaseManager {
             }
             const record = this.findRecord('views', { post_id: postId });
             if (record) {
-                const newCount = record.view_count + 1;
+                const newCount = parseInt(record.view_count) + 1;
                 this.updateRecord('views', { post_id: postId }, { view_count: newCount });
             } else {
                 this.insertRecord('views', { post_id: postId, view_count: 1 });

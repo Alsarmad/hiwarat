@@ -1,9 +1,9 @@
 import passwordHandler from '../utils/passwordHandler.js';
 
 
-export default (DBManager, translationManager, config) => {
+export default (DBManager, translationManager, config, session) => {
 
-    const lang = config.defaultLang;
+    let lang = config.defaultLang;
 
     /**
  * يقوم بإرجاع الحقول المفقودة في الجسم من الحقول المطلوبة.
@@ -21,10 +21,11 @@ export default (DBManager, translationManager, config) => {
      * @param {string[]} missingFields - قائمة بالحقول المفقودة.
      * @returns {Object} - كائن JSON يحتوي على رسالة استجابة.
      */
-    function sendMissingFieldsResponse(res, missingFields) {
+    function sendMissingFieldsResponse(res, missingFields, lang) {
+        const message = translationManager.translate('please_provide_data', {}, lang)
         return res.status(401).json({
             success: false,
-            message: `Please provide the data for "${missingFields.join('", "')}`
+            message: `${message} "${missingFields.join('", "')}`
         });
     }
 
@@ -42,13 +43,25 @@ export default (DBManager, translationManager, config) => {
      * التحقق من مصادقة المستخدم
      * يقوم بالتحقق من صحة اسم المستخدم وكلمة المرور باستخدام البيانات المخزنة في قاعدة البيانات.
      * @param {object} credentials - كائن يحتوي على اسم المستخدم وكلمة المرور.
+     * @param {object} options -  الخيارات
      * @returns {Promise<{success: boolean, user: object | null, message: string}>}
      */
-    async function checkUserAuthentication({ username, password }, usersDBManager) {
+    async function checkUserAuthentication({ username, password }, options) {
+        const lang = options?.lang ? options.lang : config.lang
+        if (options?.session) {
+            // إذا كانت الجلسة موجودة، نتخطى التحقق من كلمة المرور
+            const user = DBManager.usersDBManager.findRecord("users", { username: options.session.username });
+            if (user && convertToBoolean(user.active)) {
+                return { success: true, user: stripSensitiveFields(user), message: translationManager.translate('account_not_activated', {}, lang) };
+            }
+        }
+
+        // إذا لم تكن الجلسة موجودة، نتحقق من اسم المستخدم وكلمة المرور كالمعتاد
         if (!username || !password) {
             return { success: false, user: null, message: translationManager.translate(!username ? 'username_not_specified' : 'password_not_specified', {}, lang) };
         }
-        const user = usersDBManager.findRecord("users", { username: username?.toLowerCase() });
+
+        const user = DBManager.usersDBManager.findRecord("users", { username: username?.toLowerCase() });
         if (!user) {
             return { success: false, user: null, message: translationManager.translate('user_does_not_exist', {}, lang) };
         }
@@ -66,6 +79,7 @@ export default (DBManager, translationManager, config) => {
 
         return { success: true, user: stripSensitiveFields(user), message: translationManager.translate('verification_successful', {}, lang) };
     }
+
 
     /**
      * يحاول تحويل سلسلة JSON إلى كائن JavaScript. إذا فشل التحويل،
@@ -173,7 +187,7 @@ export default (DBManager, translationManager, config) => {
         getMissingFields,
         stripSensitiveFields,
         sendMissingFieldsResponse,
-        checkUserAuthentication: (credentials) => checkUserAuthentication(credentials, DBManager.usersDBManager),
+        checkUserAuthentication,
         checkUserRole,
         convertToBoolean,
         tryParseJSON

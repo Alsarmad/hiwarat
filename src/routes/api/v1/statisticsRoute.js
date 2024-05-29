@@ -5,11 +5,17 @@ export default async (router, config, logger, utils, DBManager) => {
             translationManager,
         } = utils;
         const { postsDBManager, reportsDBManager, usersDBManager } = DBManager;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
 
         // الحصول على كل الإحصائيات
         router.get('/statistics', async (req, res) => {
             try {
+                const { query } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
                 const totalUsers = usersDBManager.countAllRecords('users');
                 const totalPosts = postsDBManager.countAllRecords('posts');
                 const totalPinnedPosts = postsDBManager.countRecords('posts', { is_pinned: 1 });
@@ -34,7 +40,12 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على إحصائيات منشور معين
         router.get('/statistics/:post_id', async (req, res) => {
             try {
-                const { post_id } = req.params;
+                const { query, params } = req;
+                const { post_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (post_id && post_id.length > 50) {
                     const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
@@ -55,14 +66,14 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 const totalLikes = postsDBManager.countRecords('likes', { post_id: post_id });
                 const totalComments = postsDBManager.countRecords('comments', { post_id: post_id });
-                const totalViews = postsDBManager.countRecords('views', { post_id: post_id });
+                const totalViews = postsDBManager.findRecord('views', { post_id: post_id });
                 const totalReports = reportsDBManager.countRecords('reports', { reported_item_id: post_id });
 
                 return res.status(200).json({
                     success: true,
                     likes: totalLikes || 0,
                     comments: totalComments || 0,
-                    views: totalViews || 0,
+                    views: totalViews?.view_count || 0,
                     reports: totalReports || 0,
                 });
             } catch (error) {

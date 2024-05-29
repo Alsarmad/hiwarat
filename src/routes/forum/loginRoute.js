@@ -8,8 +8,8 @@ export default async (router, config, logger, utils, DBManager) => {
             sessionManager
         } = utils;
         const { usersDBManager } = DBManager;
-        
-        const lang = config.defaultLang;
+
+        let lang = config.defaultLang;
 
         router.get('/login', async (req, res) => {
             try {
@@ -31,7 +31,12 @@ export default async (router, config, logger, utils, DBManager) => {
         router.post('/login', async (req, res) => {
             try {
 
-                const { body } = req;
+                const { body, query } = req;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
                 const session = req?.session;
                 if (session) {
                     return res.status(200).json({
@@ -40,7 +45,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
                 // التحقق من المصادقة باستخدام اسم المستخدم وكلمة المرور
-                const authResult = await checkUserAuthentication({ username: body?.username, password: body?.password });
+                const authResult = await checkUserAuthentication({ username: body?.username, password: body?.password }, { lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }

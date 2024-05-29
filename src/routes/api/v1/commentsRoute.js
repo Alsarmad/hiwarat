@@ -20,7 +20,7 @@ export default async (router, config, logger, utils, DBManager) => {
 
         const { postsDBManager } = DBManager;
         const MAX_COMMENTS_PER_PAGE = 20;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
 
         // إعداد المحدد للطلبات مع رسالة مخصصة
         const createCommentsLimiter = rateLimit({
@@ -40,6 +40,9 @@ export default async (router, config, logger, utils, DBManager) => {
         router.get('/comments', (req, res) => {
             try {
                 const { query } = req;
+                if (query?.lang) {
+                    lang = query?.lang
+                }
                 const page = parseInt(query.page) || 1;
                 let limit = parseInt(query.limit) || MAX_COMMENTS_PER_PAGE;
                 limit = Math.min(limit, MAX_COMMENTS_PER_PAGE);
@@ -75,14 +78,17 @@ export default async (router, config, logger, utils, DBManager) => {
         // إنشاء تعليق جديد
         router.post('/create-comments', createCommentsLimiter, async (req, res) => {
             try {
-                const { body, headers } = req;
+                const { body, headers, query } = req;
+                if (query?.lang) {
+                    lang = query?.lang
+                }
                 const missingFields = getMissingFields(body, ["post_id", "comment_content"]);
 
                 if (missingFields.length > 0) {
-                    return sendMissingFieldsResponse(res, missingFields);
+                    return sendMissingFieldsResponse(res, missingFields, lang);
                 }
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }
@@ -96,7 +102,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const validation = dataValidator.validate(body);
+                const validation = dataValidator(body, translationManager, lang);
                 if (!validation.success) {
                     return res.status(400).json({
                         success: false,
@@ -146,7 +152,11 @@ export default async (router, config, logger, utils, DBManager) => {
         // الحصول على تعليق بواسطة المعرف
         router.get('/comments/:comment_id', (req, res) => {
             try {
-                const { comment_id } = req.params;
+                const { query, params } = req;
+                const { comment_id } = params;
+                if (query?.lang) {
+                    lang = query?.lang
+                }
                 if (comment_id && comment_id.length > 50) {
                     const message = translationManager.translate('comment_id_too_long', { length: 50 }, lang);
                     return res.status(422).json({
@@ -176,7 +186,11 @@ export default async (router, config, logger, utils, DBManager) => {
         // تحديث تعليق بواسطة المعرف
         router.put('/comments/:comment_id', async (req, res) => {
             try {
-                const { comment_id } = req.params;
+                const { query, params, body, headers } = req;
+                const { comment_id } = params;
+                if (query?.lang) {
+                    lang = query?.lang
+                }
                 if (comment_id && comment_id.length > 50) {
                     const message = translationManager.translate('comment_id_too_long', { length: 50 }, lang);
                     return res.status(422).json({
@@ -184,9 +198,8 @@ export default async (router, config, logger, utils, DBManager) => {
                         message: message,
                     });
                 }
-                const { body, headers } = req;
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }
@@ -222,7 +235,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const validation = dataValidator.validate(body);
+                const validation = dataValidator(body, translationManager, lang);
                 if (!validation.success) {
                     return res.status(400).json({
                         success: false,
@@ -264,8 +277,12 @@ export default async (router, config, logger, utils, DBManager) => {
         // حذف تعليق بواسطة المعرف
         router.delete('/comments/:comment_id', async (req, res) => {
             try {
-                const { headers, params } = req;
+                const { headers, params, query } = req;
                 const { comment_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (comment_id && comment_id.length > 50) {
                     const message = translationManager.translate('comment_id_too_long', { length: 50 }, lang);
@@ -275,7 +292,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] });
+                const authResult = await checkUserAuthentication({ username: headers["username"], password: headers["password"] }, { session: req.session, lang: lang });
                 if (!authResult.success) {
                     return res.status(401).json(authResult);
                 }

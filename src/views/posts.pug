@@ -1,0 +1,45 @@
+extends ./partials/layout.pug
+
+block content
+    section#page_post_box(dir=dir)
+        h2#page_post_title= postDB.post_title
+        ol#page_post_info
+            li.users_li
+                if userDB.profile_picture
+                    img(src=`data:image/jpeg;base64,${userDB.profile_picture.toString('base64')}` alt="").users_profile_picture
+                else
+                    img(src="/icons/users.svg" alt="").users_profile_picture
+                p= userDB.username
+            li.views_li
+                img(src="/icons/views.svg" alt="").page_post_info_icon
+                p= statisticsDB.views
+            li.comments_li
+                img(src="/icons/comments.svg" alt="").page_post_info_icon
+                p= statisticsDB.comments
+            li.likes_li
+                img(src="/icons/likes.svg" alt="").page_post_info_icon
+                p= statisticsDB.likes
+            li.reports_li
+                img(src="/icons/reports.svg" alt="").page_post_info_icon
+                p= statisticsDB.reports
+        #post_content
+            p kkkkkkkk
+
+
+block script
+    script(type="module").
+        document.addEventListener('DOMContentLoaded', function() {
+            let lang = !{JSON.stringify(lang)};
+            let postDB = !{JSON.stringify(postDB)};
+            // Find the ol element with id 'breadcrumb_box'
+            const breadcrumbOl = document.querySelector('#breadcrumb_box ol');
+            //- const editorElement = document.getElementById('box_create_post_editor');
+            if (breadcrumbOl) {
+                // Create a new li element
+                const newLi = document.createElement('li');
+                newLi.classList.add('breadcrumb-item');
+                newLi.innerText = postDB.post_title;
+                // Append the li element to the ol element
+                breadcrumbOl.appendChild(newLi);
+            }
+        });

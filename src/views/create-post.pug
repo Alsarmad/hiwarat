@@ -1,0 +1,116 @@
+extends ./partials/layout.pug
+
+block stylesheet
+    link(rel="stylesheet" href="/css/quill.snow.css")
+    link(rel="stylesheet" href="/css/atom-one-dark.min.css")
+    style.
+        #breadcrumb {
+            display: none;
+        }
+
+block content
+    - let create_new_post = translationManager.translate('create_new_post', {}, lang)
+    - let title = translationManager.translate('title', {}, lang)
+    - let hashtags = translationManager.translate('hashtags', {}, lang)
+    - let create = translationManager.translate('create', {}, lang)
+    #box_create_post
+        h2=create_new_post
+        #box_create_post_inputs(dir=dir)
+            p(title=title aria-label=title)=title
+            input#input_post_title(type="text" name="title")
+            p(title=hashtags aria-label=hashtags)=hashtags
+            input#input_post_hashtags(type="text" name="hashtags")
+        #box_create_post_editor
+        button#box_create_post_bt_create(title=create aria-label=create)=create
+        p#error_message(style="color: red; display: none;" dir=dir)
+
+block script
+    script(src="/js/quill.js") 
+    script(type="module").
+        import hljs from '/js/highlight.min.js';
+        document.addEventListener('DOMContentLoaded', function() {
+            let lang = !{JSON.stringify(lang)};
+            const editorElement = document.getElementById('box_create_post_editor');
+            if (editorElement) {
+                const quill = new Quill('#box_create_post_editor', {
+                    modules: {
+                        toolbar: [
+                            [{ 'header': '1'}, {'header': '2'}],
+                            [{size: []}],
+                            ['bold', 'italic', 'underline', 'blockquote', 'code-block'],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            [{ 'align': [] }],
+                            [{ 'direction': lang === "ar" ? 'rtl' : 'ltr' }],
+                            ['link', 'image'], 
+                            ['clean']
+                        ],
+                        syntax: { hljs },
+                    },
+                    theme: 'snow',
+                    placeholder: 'Enter your content here...',
+                });
+
+                quill.format('align', lang === "ar" ? 'right' : 'left');
+                quill.format('direction', lang === "ar" ? 'rtl' : 'ltr');
+
+                // Handling image insertion via links
+                quill.getModule('toolbar').addHandler('image', () => {
+                    let url = prompt('Enter the URL of the image');
+                    if (url) {
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', url);
+                    }
+                });
+
+                // Handling post creation
+                const input_post_title = document.getElementById('input_post_title');
+                const hashtagsInput = document.getElementById('input_post_hashtags');
+                const box_create_post_bt_create = document.getElementById('box_create_post_bt_create');
+                const errorMessageElement = document.getElementById('error_message');
+
+                box_create_post_bt_create.addEventListener('click', function() {
+                    let title = input_post_title.value.trim();
+                    let hashtags = hashtagsInput.value.split(/[ ,]+/).filter(tag => tag.trim() !== '');
+                    let post_content = quill.root.innerHTML; // Get the HTML content of the editor
+                    let post_content_raw = quill.getText();
+
+                    // Log the data
+                    console.log({
+                        title,
+                        hashtags,
+                        post_content,
+                        post_content_raw
+                    });
+
+                    // Prepare the POST request
+                    fetch(`/api/v1/create-posts?lang=${lang}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            post_title: title,
+                            post_content: post_content,
+                            hashtags: hashtags
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Redirect to the home page
+                            window.location.href = '/';
+                        } else {
+                            // Display the error message
+                            errorMessageElement.textContent = data.message || 'An error occurred.';
+                            errorMessageElement.style.display = 'block';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        // Display a generic error message
+                        errorMessageElement.textContent = 'An error occurred. Please try again later.';
+                        errorMessageElement.style.display = 'block';
+                    });
+                });
+            }
+        });

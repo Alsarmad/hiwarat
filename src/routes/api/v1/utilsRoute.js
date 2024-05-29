@@ -7,11 +7,16 @@ export default async (router, config, logger, utils, DBManager) => {
             getElapsedTime,
         } = utils;
         const { postsDBManager } = DBManager;
-        const lang = config.defaultLang;
+        let lang = config.defaultLang;
 
         router.get('/get-elapsed-time', async (req, res) => {
             try {
-                const { created_at, showOnly, lang } = req.query;
+                const { query } = req;
+                const { created_at, showOnly } = query;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
 
                 if (!created_at) {
                     return res.status(400).json({
