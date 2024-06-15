@@ -74,15 +74,23 @@ export default class DatabaseManager {
      */
     insertRecord(tableName, data) {
         try {
-            // const existingRecord = this.db.prepare(`SELECT * FROM ${tableName} WHERE id = ?`).get(data.id);
-            // if (existingRecord) {
-            //     logError(`السجل بالمعرف ${data.id} موجود بالفعل في الجدول ${tableName}.`);
-            //     return null;
-            // }
+            const columns = Object.keys(data);
+            const placeholders = columns.map(() => '?').join(', ');
 
-            const columns = Object.keys(data).join(', ');
-            const values = Object.values(data).map(value => `'${value}'`).join(', ');
-            const result = this.db.prepare(`INSERT INTO ${tableName} (${columns}) VALUES (${values})`).run();
+            // تحويل القيم إلى تنسيقات مدعومة
+            const values = Object.values(data).map(value => {
+                if (value === null || value === undefined) {
+                    return null;
+                } else if (Array.isArray(value) || typeof value === 'object') {
+                    return JSON.stringify(value);
+                }
+                return value;
+            });
+
+            const query = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
+            const statement = this.db.prepare(query);
+
+            const result = statement.run(values);
             logInfo(`تمت إضافة سجل جديد إلى جدول ${tableName}.`);
             return result.lastInsertRowid;
         } catch (error) {
@@ -90,6 +98,7 @@ export default class DatabaseManager {
             throw error; // يمكنك رمي الخطأ للأعلى ليتم التعامل معه في الشيفرة المستدعية
         }
     }
+
 
     /**
      * @description يحدد ما إذا كان الجدول موجودًا في قاعدة البيانات.
@@ -149,11 +158,26 @@ export default class DatabaseManager {
             const whereClause = conditions.join(' AND ');
 
             // بناء القيم الجديدة للتحديث
-            const setValues = Object.entries(newData).map(([key, value]) => `${key} = '${value}'`).join(', ');
+            const setClauses = [];
+            const setValues = [];
+            for (const [key, value] of Object.entries(newData)) {
+                if (value === null || value === undefined) {
+                    setClauses.push(`${key} = NULL`);
+                } else if (Array.isArray(value) || typeof value === 'object') {
+                    setClauses.push(`${key} = ?`);
+                    setValues.push(JSON.stringify(value));
+                } else {
+                    setClauses.push(`${key} = ?`);
+                    setValues.push(value);
+                }
+            }
+
+            // دمج قيم التحديث مع قيم البحث
+            const finalValues = [...setValues, ...values];
 
             // تنفيذ تحديث السجل
-            const statement = this.db.prepare(`UPDATE ${tableName} SET ${setValues} WHERE ${whereClause}`);
-            statement.run(...values);
+            const statement = this.db.prepare(`UPDATE ${tableName} SET ${setClauses.join(', ')} WHERE ${whereClause}`);
+            statement.run(...finalValues);
             return true;
         } catch (error) {
             logError(`حدث خطأ أثناء تحديث السجل في جدول ${tableName}:`, error);
@@ -294,31 +318,34 @@ export default class DatabaseManager {
     /**
      * @description جلب جميع السجلات في جدول معين استنادًا إلى قيمة محددة في عمود معين.
      * @param {string} tableName اسم الجدول الذي يحتوي على البيانات.
-     * @param {string} columnName اسم العمود الذي يجب فحصه.
-     * @param {any} columnValue القيمة التي يجب أن تتوافق مع العمود.
-     * @returns {Array} مصفوفة تحتوي على جميع السجلات التي تتوافق مع القيمة المحددة في العمود.
+     * @param {object} criteria كائن يحتوي على الأعمدة والقيم التي تريد البحث عنها.
+     * @returns {Array|null} مصفوفة تحتوي على جميع السجلات التي تتوافق مع القيمة المحددة في العمود.
      */
-    findRecordAll(tableName, columnName, columnValue) {
+    findRecordAll(tableName, criteria) {
         try {
             // التحقق من وجود الجدول
             if (!this.tableExists(tableName)) {
                 logError(`الجدول ${tableName} غير موجود.`);
                 return [];
             }
-
-            // التحقق من وجود العمود
+            // بناء شرط البحث
             const columns = this.getColumnNames(tableName);
-            if (!columns.includes(columnName)) {
-                logError(`العمود ${columnName} غير موجود في جدول ${tableName}.`);
-                return [];
+            const conditions = [];
+            const values = [];
+            for (const [column, value] of Object.entries(criteria)) {
+                if (!columns.includes(column)) {
+                    logError(`العمود ${column} غير موجود في جدول ${tableName}.`);
+                    return null;
+                }
+                conditions.push(`${column} = ?`);
+                values.push(value);
             }
-
+            const whereClause = conditions.join(' AND ');
             // جلب السجلات التي تتوافق مع القيمة المعطاة في العمود
-            const records = this.db.prepare(`SELECT * FROM ${tableName} WHERE ${columnName} = ?`).all(columnValue);
-            logInfo(`السجلات في جدول ${tableName} حيث ${columnName} تساوي ${columnValue}:`, records?.length || 0);
+            const records = this.db.prepare(`SELECT * FROM ${tableName} WHERE ${whereClause} ORDER BY ROWID DESC`).all(...values);
             return records;
         } catch (error) {
-            logError(`حدث خطأ أثناء جلب السجلات من جدول ${tableName} حيث ${columnName} تساوي ${columnValue}:`, error);
+            logError(`حدث خطأ أثناء جلب السجلات من جدول ${tableName}:`, error);
             throw error;
         }
     }

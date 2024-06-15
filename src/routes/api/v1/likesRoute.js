@@ -145,7 +145,7 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 // التحقق من وجود المنشور
-                const post = await postsDBManager.findRecord("posts", { post_id });
+                const post = postsDBManager.findRecord("posts", { post_id });
                 if (!post) {
                     const message = translationManager.translate('post_not_found', {}, lang);
                     return res.status(404).json({
@@ -155,7 +155,7 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 // الحصول على جميع الإعجابات المرتبطة بالمنشور
-                const likes = await postsDBManager.findRecordAll("likes", "post_id", post_id);
+                const likes = postsDBManager.findRecordAll("likes", { post_id: post_id });
                 if (!likes || likes.length === 0) {
                     const message = translationManager.translate('no_likes_found', {}, lang);
                     return res.status(404).json({

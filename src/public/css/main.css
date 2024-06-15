@@ -620,7 +620,9 @@ footer {
 =======================
 */
 
-#page_post_box {
+#page_post_box,
+#page_post_comments_box,
+#box_create_reply_editor {
     max-width: 1000px;
     margin-left: auto;
     margin-right: auto;
@@ -629,7 +631,9 @@ footer {
     border-style: double;
 }
 
-#page_post_title {
+#page_post_title,
+#comments_box_title,
+#reply_editor_title {
     margin-top: 0px;
     margin-bottom: 0px;
     background-color: var(--primary-color);
@@ -677,6 +681,79 @@ footer {
 #post_content {
     box-sizing: border-box;
     word-break: break-all;
+}
+
+#page_post_comments_box {
+    margin-top: 20px;
+}
+
+#comments_box_ol {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.page_post_comments_info {
+    display: flex;
+    /* justify-content: right; */
+    align-items: center;
+    background-color: var(--additional-color-1);
+    color: var(--text-color-white);
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.page_post_comments_info li {
+    display: flex;
+    justify-content: last baseline;
+    align-items: center;
+    font-size: 12px;
+}
+
+.comment_content_html {
+    background-color: var(--header-background);
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding: 10px;
+}
+
+.reply-button {
+    border: none;
+}
+
+#load_more_btn,
+#box_create_reply_bt_create {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 200px;
+    max-width: 100%;
+    border: none;
+}
+
+.div_buttons_comments {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 0px;
+    margin-right: 0px;
+    direction: rtl;
+}
+
+.div_buttons_comments button {
+    border: none;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#box_create_reply_editor {
+    margin-top: 10px;
+    background-color: var(--header-background);
+}
+
+#reply_editor {
+    padding: 20px;
 }
 
 

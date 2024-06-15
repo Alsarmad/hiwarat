@@ -140,7 +140,7 @@ export default async (router, config, logger, utils, DBManager) => {
                 }
 
                 // التحقق من وجود الهاشتاج بالنص
-                const hashtagRecords = postsDBManager.findRecordAll("hashtags", "hashtag_text", hashtag_text);
+                const hashtagRecords = postsDBManager.findRecordAll("hashtags", { hashtag_text: hashtag_text });
                 if (hashtagRecords.length === 0) {
                     const message = translationManager.translate('hashtag_not_found', {}, lang);
                     return res.status(404).json({

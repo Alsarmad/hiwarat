@@ -306,7 +306,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     });
                 }
 
-                const isOwner = authResult.user.user_id === post.user_id;
+                const isOwner = authResult.user.user_id === comment.user_id;
                 const isAdmin = checkUserRole(authResult.user, ["admin"]);
                 const isBanned = convertToBoolean(authResult.user.is_banned); // تأكد من حالة الحظر للمستخدم
 

@@ -1,39 +1,317 @@
 extends ./partials/layout.pug
 
+block stylesheet
+    link(rel="stylesheet" href="/css/quill.snow.css")
+    link(rel="stylesheet" href="/css/atom-one-dark.min.css")
+
 block content
+    - let comments = translationManager.translate('comments', {}, lang) 
+    - let reply = translationManager.translate('reply', {}, lang) 
+    - let deleteComment = translationManager.translate('delete', {}, lang)  
+    - let create = translationManager.translate('create', {}, lang)
+    - let create_new_comment = translationManager.translate('create_new_comment', {}, lang)
+
     section#page_post_box(dir=dir)
-        h2#page_post_title= postDB.post_title
+        h2#page_post_title=postDB.post_title
         ol#page_post_info
             li.users_li
                 if userDB.profile_picture
                     img(src=`data:image/jpeg;base64,${userDB.profile_picture.toString('base64')}` alt="").users_profile_picture
                 else
                     img(src="/icons/users.svg" alt="").users_profile_picture
-                p= userDB.username
+                p=userDB.username
             li.views_li
                 img(src="/icons/views.svg" alt="").page_post_info_icon
-                p= statisticsDB.views
+                p=statisticsDB.views
             li.comments_li
                 img(src="/icons/comments.svg" alt="").page_post_info_icon
-                p= statisticsDB.comments
+                p=statisticsDB.comments
             li.likes_li
                 img(src="/icons/likes.svg" alt="").page_post_info_icon
-                p= statisticsDB.likes
+                p=statisticsDB.likes
             li.reports_li
                 img(src="/icons/reports.svg" alt="").page_post_info_icon
-                p= statisticsDB.reports
+                p=statisticsDB.reports
         #post_content
             #post_content_html!=postDB.post_content
-
+    if statisticsDB.comments > 0
+        section#page_post_comments_box(dir=dir)
+            h2#comments_box_title=comments
+            ol#comments_box_ol
+        button#load_more_btn(type="button" title=more)=more
+    if session
+        section#box_create_reply_editor(dir=dir)
+            h2#reply_editor_title=create_new_comment
+            div#reply_editor
+            button#box_create_reply_bt_create(title=create aria-label=create)=create
+            p#error_message(style="color: red; display: none;" dir=dir)
 
 block script
+    script(src="/js/quill.js") 
     script(type="module").
-        document.addEventListener('DOMContentLoaded', function() {
+        import hljs from '/js/highlight.min.js';
+        document.addEventListener('DOMContentLoaded', async function() {
             let lang = !{JSON.stringify(lang)};
+            let reply_translate = !{JSON.stringify(reply)};
+            let delete_translate = !{JSON.stringify(deleteComment)};
             let postDB = !{JSON.stringify(postDB)};
+            let statisticsDB = !{JSON.stringify(statisticsDB)};
+            let postID = postDB.post_id;
+            let commentsLength = statisticsDB.comments;
+            let session = !{JSON.stringify(session)};
+            const reply_editor = document.getElementById('reply_editor');
+
+            let quill;
+            if (reply_editor) {
+                quill = new Quill('#reply_editor', {
+                    modules: {
+                        toolbar: [
+                            [{ 'header': '1'}, {'header': '2'}],
+                            [{size: []}],
+                            ['bold', 'italic', 'underline', 'blockquote', 'code'],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            [{ 'align': [] }],
+                            [{ 'direction': lang === "ar" ? 'rtl' : 'ltr' }],
+                            ['link', 'image'], 
+                            ['clean']
+                        ]
+                    },
+                    theme: 'snow',
+                    placeholder: 'Please enter your comment here',
+                });
+
+                quill.format('align', lang === "ar" ? 'right' : 'left');
+                quill.format('direction', lang === "ar" ? 'rtl' : 'ltr');
+
+                // Handling image insertion via links
+                quill.getModule('toolbar').addHandler('image', () => {
+                    let url = prompt('Enter the URL of the image');
+                    if (url) {
+                        const range = quill.getSelection();
+                        quill.insertEmbed(range.index, 'image', url);
+                    }
+                });
+            }
+
+            let currentPage = 1;
+            const limit = 20;
+            let allComments = [];
+
+            // Function to fetch comments from the API
+            async function fetchComments(postID) {
+                const response = await fetch(`/api/v1/posts/${postID}/comments`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.comments;
+                } else {
+                    console.error('Failed to fetch comments');
+                    return [];
+                }
+            }
+
+            // Function to render comments
+            function renderComments(comments) {
+                const commentsBox = document.querySelector('#comments_box_ol');
+                comments.forEach(async comment => {
+                    const user_id = comment.user_id;
+                    const userJson = await fetchJson(`/api/v1/users/${user_id}`);
+                    const li = document.createElement('li');
+
+                    const commentInfo = document.createElement('ol');
+                    commentInfo.classList.add('page_post_comments_info');
+                    commentInfo.style.justifyContent = lang === "ar" ? "right" : "left";
+
+                    const userLi = document.createElement('li');
+                    userLi.classList.add('users_li');
+                    const userImg = document.createElement('img');
+                    userImg.src = userJson.user.profile_picture ? `data:image/jpeg;base64,${userJson.user.profile_picture.toString('base64')}` : "/icons/users.svg";
+                    userImg.alt = userJson.user.username;
+                    userImg.title = userJson.user.username;
+                    userImg.classList.add('users_profile_picture');
+                    userLi.appendChild(userImg);
+                    const usernameP = document.createElement('p');
+                    usernameP.textContent = userJson.user.username;
+                    usernameP.title = userJson.user.username;
+                    userLi.appendChild(usernameP);
+
+                    commentInfo.appendChild(userLi);
+
+                    const commentContent = document.createElement('div');
+                    commentContent.classList.add('comment_content_html');
+                    commentContent.innerHTML = comment.comment_content;
+
+                    const ButtonsDiv = document.createElement('div');
+                    ButtonsDiv.classList.add('div_buttons_comments');
+                    ButtonsDiv.style.justifyContent = lang === "ar" ? "left" : "right";
+
+                    li.appendChild(commentInfo);
+                    li.appendChild(commentContent);
+                    commentContent.appendChild(ButtonsDiv);
+
+                    if (session) {
+                        const replyButton = document.createElement('button');
+                        replyButton.textContent = reply_translate;
+                        replyButton.title = reply_translate;
+                        replyButton.classList.add('reply-button');
+                        replyButton.addEventListener('click', () => {
+                            quoteCommentInEditor(userJson.user.username, comment.comment_content);
+                            scrollToEditor();
+                        });
+                        ButtonsDiv.appendChild(replyButton);
+                    }
+
+                    if (session && (session.username === userJson.user.username || session.role === 'admin')) {
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = delete_translate;
+                        deleteButton.title = delete_translate;
+                        deleteButton.classList.add('delete-button');
+                        deleteButton.addEventListener('click',async () => {
+                            // Add your delete handling logic here
+                            //- alert('Delete comment ' + comment.comment_id);
+                            await deleteComment(comment.comment_id);
+                        });
+
+                        ButtonsDiv.appendChild(deleteButton);
+                    }
+
+                    commentsBox.appendChild(li);
+                });
+            }
+
+            // Function to quote comment in Quill editor
+            function quoteCommentInEditor(username, commentContent) {
+                const currentContent = quill.root.innerHTML;
+                const newQuote = `<blockquote><p><strong>${username}:</strong> ${commentContent}</p></blockquote><br>`;
+                quill.clipboard.dangerouslyPasteHTML(currentContent + newQuote);
+            }
+
+            // Function to scroll to the editor
+            function scrollToEditor() {
+                const editorSection = document.querySelector('#box_create_reply_editor');
+                editorSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            // Function to handle comment creation
+            async function createComment() {
+                const commentContent = quill.root.innerHTML.trim();
+                if (!commentContent) {
+                    alert('Please enter a comment.');
+                    return;
+                }
+
+                const body = JSON.stringify({
+                    post_id: postID,
+                    comment_content: commentContent,
+                });
+
+                try {
+                    const response = await fetch('/api/v1/create-comments', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: body,
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Assuming new comment data is returned, you can append it to commentsBox
+                        // For example:
+                        // renderNewComment(data.comment);
+                        // or refresh comments:
+                        // fetchAndRenderComments(postID);
+                        alert('Comment created successfully!');
+                        // Clear editor after successful creation
+                        quill.root.innerHTML = '';
+                        // Fetch and render comments after creation
+                        fetchAndRenderComments(postID);
+                    } else {
+                        console.error('Failed to create comment:', response.statusText);
+                        alert('Failed to create comment. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error creating comment:', error);
+                    alert('Failed to create comment. Please try again.');
+                }
+            }
+
+            // Function to handle comment deletion
+            async function deleteComment(commentId) {
+                if (!confirm('Are you sure you want to delete this comment?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/v1/comments/${commentId}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        // Assuming comment is deleted successfully from backend,
+                        // remove the comment from UI or reload comments
+                        alert('Comment deleted successfully!');
+                        // Example: Remove comment from UI
+                        // const commentElement = document.getElementById(commentId);
+                        // commentElement.remove();
+                        // Or refresh comments:
+                        fetchAndRenderComments(postID); // Assuming this function exists to refresh comments
+                    } else {
+                        console.error('Failed to delete comment:', response.statusText);
+                        alert('Failed to delete comment. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error deleting comment:', error);
+                    alert('Failed to delete comment. Please try again.');
+                }
+            }
+
+            // Event listener for create button
+            const createButton = document.getElementById('box_create_reply_bt_create');
+            if (createButton) {
+                createButton.addEventListener('click', createComment);
+            }
+
+            // Fetch all comments initially
+            async function fetchAndRenderComments(postID) {
+                allComments = await fetchComments(postID);
+                // Clear existing comments
+                const commentsBox = document.querySelector('#comments_box_ol');
+                commentsBox.innerHTML = '';
+                // Render all comments
+                renderComments(allComments.slice(0, limit));
+                // Reset current page to 1
+                currentPage = 1;
+                // Show load more button if there are more comments
+                const loadMoreBtn = document.querySelector('#load_more_btn');
+                if (allComments.length > limit) {
+                    loadMoreBtn.style.display = 'block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+            }
+
+            // Load more button functionality
+            const loadMoreBtn = document.querySelector('#load_more_btn');
+            if (loadMoreBtn) {
+                loadMoreBtn.addEventListener('click', () => {
+                    currentPage++;
+                    const start = (currentPage - 1) * limit;
+                    const end = currentPage * limit;
+                    renderComments(allComments.slice(start, end));
+                    // Hide the button if all comments are loaded
+                    if (end >= allComments.length) {
+                        loadMoreBtn.style.display = 'none';
+                    }
+                });
+            }
+
+            // Initialize comments
+            if (commentsLength > 0) {
+                fetchAndRenderComments(postID);
+            }
+
             // Find the ol element with id 'breadcrumb_box'
             const breadcrumbOl = document.querySelector('#breadcrumb_box ol');
-            //- const editorElement = document.getElementById('box_create_post_editor');
             if (breadcrumbOl) {
                 // Create a new li element
                 const newLi = document.createElement('li');
@@ -43,3 +321,28 @@ block script
                 breadcrumbOl.appendChild(newLi);
             }
         });
+
+        // Highlight code blocks on page load
+        hljs.highlightAll();
+
+        // Function to fetch JSON data
+        async function fetchJson(path, options = {}) {
+            const { method = 'GET', body = null } = options;
+            try {
+                const response = await fetch(path, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return { success: false };
+            }
+        }
+

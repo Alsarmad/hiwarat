@@ -148,10 +148,12 @@ export default async (router, config, logger, utils, DBManager) => {
                 const htmlContent = marked(body.post_content);
                 // تحويل HTML إلى نص عادي
                 const plainTextContent = convert(htmlContent, { wordwrap: false });
+                let post_title = convert(body.post_title, { wordwrap: false })
+                post_title = post_title.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
                 const dataPost = {
                     post_id,
                     user_id: authResult.user.user_id,
-                    post_title: convert(body.post_title, { wordwrap: false }),
+                    post_title: post_title,
                     post_content: htmlContent || body.post_content,
                     post_content_raw: plainTextContent || htmlContent,
                     hashtags: uniqueHashtags,
@@ -159,6 +161,7 @@ export default async (router, config, logger, utils, DBManager) => {
                     created_at: currentTime,
                     updated_at: currentTime,
                 }
+
                 postsDBManager.insertRecord("posts", dataPost);
 
                 for (const hashtag of uniqueHashtags) {
@@ -234,6 +237,47 @@ export default async (router, config, logger, utils, DBManager) => {
                         ...post,
                         hashtags: tryParseJSON(post?.hashtags)
                     },
+
+                });
+            } catch (error) {
+                logError("An error occurred while processing the request", error);
+                return res.status(500).json({ message: `${error}` });
+            }
+        });
+
+        // الحصول على التعليقات الخاصة بالمنشور بواسطة نعرف المنشور
+        router.get('/posts/:post_id/comments', (req, res) => {
+            try {
+
+                const { query, params } = req;
+                const { post_id } = params;
+
+                if (query?.lang) {
+                    lang = query?.lang
+                }
+
+                if (post_id && post_id.length > 50) {
+                    const message = translationManager.translate('post_id_too_long', { length: 50 }, lang);
+                    return res.status(422).json({
+                        success: false,
+                        message: message,
+                    });
+                }
+
+                const post = postsDBManager.findRecord("posts", { post_id });
+                if (!post) {
+                    const message = translationManager.translate('post_not_found', {}, lang);
+                    return res.status(404).json({
+                        success: false,
+                        message: message
+                    });
+                }
+
+                const comments = postsDBManager.findRecordAll("comments", { post_id: post_id });
+
+                return res.status(200).json({
+                    success: true,
+                    comments: comments.reverse()
 
                 });
             } catch (error) {

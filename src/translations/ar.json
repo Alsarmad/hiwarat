@@ -114,6 +114,7 @@
     "elapsed_time_years_months": "منذ {years} سنة و {remainingMonths} شهر",
     "_____________": "____________",
     "posts": "المنشورات",
+    "comments": "التعليقات",
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
     "sign_in": "تسجيل الدخول",
@@ -127,9 +128,13 @@
     "logged_in_successfully": "لقد قمت بتسجيل الدخول بنجاح.",
     "new_post": "منشور جديد",
     "create_new_post": "إنشاء منشور جديد",
+    "create_new_comment": "إنشاء تعليق جديد",
     "title": "العنوان",
     "hashtags": "الهاشتاجات",
     "create": "إنشاء",
     "please_provide_data": "يرجى تقديم البيانات التالية",
+    "reply": "رد",
+    "more": "المزيد",
+    "delete": "حذف",
     "fffffffffff": "fffffffffff"
 }

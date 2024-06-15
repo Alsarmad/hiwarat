@@ -408,7 +408,7 @@ export default async (router, config, logger, utils, DBManager) => {
 
                 usersDBManager.deleteRecord("users", { username: username.toLowerCase() });
 
-                const postRecords = postsDBManager.findRecordAll("posts", "user_id", user.user_id);
+                const postRecords = postsDBManager.findRecordAll("posts", { user_id: user.user_id });
                 postRecords.forEach(post => {
                     // حذف المنشورات من قاعدة البيانات
                     postsDBManager.deleteRecord("posts", { post_id: post.post_id });

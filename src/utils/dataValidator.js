@@ -119,10 +119,10 @@ function dataValidator(userData, translationManager, lang) {
             }
         },
         post_content: {
-            maxLength: 10000,
+            maxLength: 100000,
             minLength: 50,
             messages: {
-                maxLength: translationManager.translate('post_content_maxLength', { length: 10000 }, lang),
+                maxLength: translationManager.translate('post_content_maxLength', { length: 100000 }, lang),
                 minLength: translationManager.translate('post_content_minLength', { length: 50 }, lang)
             }
         },

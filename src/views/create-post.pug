@@ -2,7 +2,6 @@ extends ./partials/layout.pug
 
 block stylesheet
     link(rel="stylesheet" href="/css/quill.snow.css")
-    link(rel="stylesheet" href="/css/atom-one-dark.min.css")
     style.
         #breadcrumb {
             display: none;
@@ -27,7 +26,6 @@ block content
 block script
     script(src="/js/quill.js") 
     script(type="module").
-        import hljs from '/js/highlight.min.js';
         document.addEventListener('DOMContentLoaded', function() {
             let lang = !{JSON.stringify(lang)};
             const editorElement = document.getElementById('box_create_post_editor');
@@ -37,14 +35,13 @@ block script
                         toolbar: [
                             [{ 'header': '1'}, {'header': '2'}],
                             [{size: []}],
-                            ['bold', 'italic', 'underline', 'blockquote', 'code-block'],
+                            ['bold', 'italic', 'underline', 'blockquote', 'code'],
                             [{'list': 'ordered'}, {'list': 'bullet'}],
                             [{ 'align': [] }],
                             [{ 'direction': lang === "ar" ? 'rtl' : 'ltr' }],
                             ['link', 'image'], 
                             ['clean']
-                        ],
-                        syntax: { hljs },
+                        ]
                     },
                     theme: 'snow',
                     placeholder: 'Enter your content here...',

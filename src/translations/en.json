@@ -114,6 +114,7 @@
     "elapsed_time_years_months": "{years} years and {remainingMonths} months ago",
     "_____________": "____________",
     "posts": "Posts",
+    "comments": "Comments",
     "username": "username",
     "password": "password",
     "sign_in": "Sign in",
@@ -127,9 +128,13 @@
     "logged_in_successfully": "You are logged in successfully.",
     "new_post": "New Post",
     "create_new_post": "Create a New Post",
+    "create_new_comment": "Create a New Comment",
     "title": "Title",
     "hashtags": "Hashtags",
     "create": "Create",
     "please_provide_data": "Please provide the data for",
+    "reply": "Reply",
+    "more": "More",
+    "delete": "Delete",
     "fffffffffff": "fffffffffff"
 }
