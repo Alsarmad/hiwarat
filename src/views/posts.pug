@@ -34,6 +34,9 @@ block content
                 p=statisticsDB.reports
         #post_content
             #post_content_html!=postDB.post_content
+            if session && (userDB.username === session.username || session.role === 'admin')
+                #but_div(style=`justify-content:${lang === "ar" ? "left" : "right"};`)
+                    button(title=deleteComment)#delete-button-post=deleteComment
     if statisticsDB.comments > 0
         section#page_post_comments_box(dir=dir)
             h2#comments_box_title=comments
@@ -320,10 +323,38 @@ block script
                 // Append the li element to the ol element
                 breadcrumbOl.appendChild(newLi);
             }
-        });
 
-        // Highlight code blocks on page load
-        hljs.highlightAll();
+            async function deletePostApi() {
+                if (!confirm('Are you sure you want to delete this post?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/v1/posts/${postID}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        alert('Posts deleted successfully!');
+                        window.location.pathname = "/";
+                    } else {
+                        console.error('Failed to delete post:', response.statusText);
+                        alert('Failed to delete post. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error deleting post:', error);
+                    alert('Failed to delete post. Please try again.');
+                }
+            }
+
+            const deletePostButton = document.getElementById('delete-button-post');
+            if (deletePostButton) {
+                deletePostButton.addEventListener('click', deletePostApi);
+            }
+
+            // Highlight code blocks on page load
+            hljs.highlightAll();
+        });
 
         // Function to fetch JSON data
         async function fetchJson(path, options = {}) {
@@ -345,4 +376,3 @@ block script
                 return { success: false };
             }
         }
-

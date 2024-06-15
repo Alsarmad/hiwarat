@@ -683,6 +683,21 @@ footer {
     word-break: break-all;
 }
 
+#but_div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 0px;
+    margin-right: 0px;
+    direction: rtl;
+}
+
+#but_div button {
+    border: none;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
 #page_post_comments_box {
     margin-top: 20px;
 }
